@@ -41,6 +41,8 @@ and the arrow keys move the highlight. Tap the agent's name to pick another
 installed one; the choice is saved in `~/.config/omalauncher/agent`. Hold the mic to talk and release to send, or tap it to dictate
 into the field. Speech is recognized by Android (on the device when the phone
 supports it), so only text reaches Linux.
+GitHub Copilot prompts start an interactive session (`copilot -i`); quotes,
+newlines and shell characters in the prompt are passed as literal text.
 
 Touch input in Linux windows: tap is a left click, long press is a right
 click, drag scrolls; apps with touch support (foot, GTK) get real touch.

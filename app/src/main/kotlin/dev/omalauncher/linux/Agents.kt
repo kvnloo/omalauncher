@@ -52,7 +52,7 @@ val AGENTS =
     )
 
 /**
- * Starts [agentBin] with a first prompt; OpenCode takes it as --prompt, the others as an argument.
+ * Starts [agentBin] with a first prompt; OpenCode takes --prompt and Copilot takes -i.
  * Ori's agent is `ori code`, which stays open only with --interactive. Kimi takes a prompt only in
  * print mode, so the session it ran in is continued after the answer.
  * [readOnly], for reading something untrusted: Claude Code starts in plan mode, where it can read but not
@@ -67,6 +67,7 @@ fun agentInvocation(
     val quoted = shellQuote(prompt)
     return when {
         agentBin == "opencode" -> "$agentBin --prompt $quoted"
+        agentBin == "copilot" -> "$agentBin -i $quoted"
         agentBin == "claude" && readOnly -> "$agentBin --permission-mode plan $quoted"
         agentBin == "ori" -> "ori code --interactive --prompt $quoted"
         agentBin == "kimi" -> "kimi --prompt $quoted && kimi --continue"
