@@ -120,8 +120,13 @@ packages and the tools mise installed (the coding agents). The launcher
 checks at most every 6 hours while it's on screen: pacman against a private
 copy of the databases in /tmp, so the real ones and pacman's lock are
 untouched, plus `mise outdated`. When updates are pending, a dot shows on the
-app list's settings gear. "update all" in settings runs `pacman -Syyu` and then
-`mise upgrade` as one job. Nothing updates automatically.
+app list's settings gear. "update all" in settings runs `pacman -Syyu`, updates
+mise itself without updating plugins, then upgrades its tools as one job.
+OpenCode installs and updates use a current Node/npm toolchain only within
+their job, so mise's registry can select its v2 distribution and approve its
+required postinstall without replacing the user's Node/npm version requests.
+Other tools are upgraded outside that temporary environment. Nothing updates
+automatically.
 
 Pinned versions: `ThemeStore.OMARCHY_REF` (the Omarchy commit) and
 `CLIAMP_VERSION` in `Bootstrap.kt`. Changing the first makes every install
