@@ -52,12 +52,13 @@ val AGENTS =
     )
 
 /**
- * Starts [agentBin] with a first prompt; OpenCode takes it as --prompt, the others as an argument.
+ * Starts [agentBin] with a first prompt; OpenCode takes it as --prompt, Antigravity and Copilot as -i (they
+ * refuse a bare argument), the others as an argument.
  * Ori's agent is `ori code`, which stays open only with --interactive. Kimi takes a prompt only in
  * print mode, so the session it ran in is continued after the answer.
- * [readOnly], for reading something untrusted: Claude Code starts in plan mode, where it can read but not
- * run commands or change files whatever the user's settings say. The others have no flag for that we can
- * rely on inside proot, and only have the prompt.
+ * [readOnly], for reading something untrusted: Claude Code and Antigravity start in plan mode, where they
+ * can read but not run commands or change files whatever the user's settings say. The others have no flag
+ * for that we can rely on inside proot, and only have the prompt.
  */
 fun agentInvocation(
     agentBin: String,
@@ -67,21 +68,14 @@ fun agentInvocation(
     val quoted = shellQuote(prompt)
     return when {
         agentBin == "opencode" -> "$agentBin --prompt $quoted"
+        agentBin == "copilot" -> "$agentBin -i $quoted"
         agentBin == "claude" && readOnly -> "$agentBin --permission-mode plan $quoted"
         agentBin == "ori" -> "ori code --interactive --prompt $quoted"
         agentBin == "kimi" -> "kimi --prompt $quoted && kimi --continue"
+        agentBin == "agy" && readOnly -> "$agentBin --mode plan -i $quoted"
+        agentBin == "agy" -> "$agentBin -i $quoted"
         else -> "$agentBin $quoted"
     }
-}
-
-/** A new-app session in ~/apps: the agent asks what to build, then adds it to the app drawer. */
-fun newAppCommand(agentBin: String): String {
-    val prompt =
-        "Ask me what app to build, then build it in its own directory here. It runs on Arch Linux ARM (aarch64) inside proot " +
-            "on an Android phone, under a Wayland compositor: no systemd, no X11, OpenGL usually in software, a small touch screen. " +
-            "Install what it needs with pacman. When it works, add a desktop entry at ~/.local/share/applications/<name>.desktop " +
-            "(Terminal=true for terminal apps) so it shows up in my app drawer."
-    return "mkdir -p ~/apps && cd ~/apps && ${agentInvocation(agentBin, prompt)}; exec bash"
 }
 
 class AgentStore(
