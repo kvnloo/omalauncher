@@ -74,6 +74,32 @@ fun agentInvocation(
     }
 }
 
+/**
+ * OpenCode 2 needs mise's updated registry and npm's per-package script approvals.
+ * Use a current toolchain only for this job; never rewrite the user's Node/npm requests.
+ * Mise still selects OpenCode's backend and versions from its existing configuration.
+ */
+internal fun openCodeScript(updating: Boolean): String =
+    """
+    (
+      mise self-update --yes --no-plugins &&
+      tools=${'$'}(mise ls --current --json) &&
+      if ${if (updating) "printf '%s' \"${'$'}tools\" | jq -e 'has(\"opencode\")' >/dev/null" else "true"}; then
+        export MISE_NODE_VERSION=lts MISE_NPM_VERSION=latest &&
+        mise install node npm &&
+        ${if (updating) {
+            "mise upgrade opencode"
+        } else {
+            """if printf '%s' "${'$'}tools" | jq -e 'has("opencode")' >/dev/null; then
+              mise install opencode
+            else
+              mise use -g opencode
+            fi"""
+        }}
+      fi
+    )
+    """.trimIndent()
+
 class AgentStore(
     private val proot: Proot,
     /** Called when the set of installed agents changed, so their desktop entries follow. */
@@ -123,8 +149,12 @@ class AgentStore(
     fun installScript(agent: Agent) =
         buildString {
             if (!mise.exists()) append("curl -fsSL https://mise.run | sh && ")
-            if (agent.pkg.startsWith("npm:")) append("mise use -g node@lts && ")
-            append("mise use -g ${shellQuote(agent.pkg)}")
+            if (agent.bin == "opencode") {
+                append(openCodeScript(updating = false))
+            } else {
+                if (agent.pkg.startsWith("npm:")) append("mise use -g node@lts && ")
+                append("mise use -g ${shellQuote(agent.pkg)}")
+            }
             // Downloads are only needed during install; storage on phones is tight.
             append(" && mise cache clear && rm -rf ~/.local/share/mise/downloads")
         }

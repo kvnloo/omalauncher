@@ -187,6 +187,7 @@ class SystemUpdates(
         /** Databases refreshed (-Syy) even if pacman thinks they're current: mirrors lag each other. */
         val UPDATE_SCRIPT =
             "pacman -Syyu --noconfirm && $CLEAN_PACMAN_CACHE && " +
-                "if command -v mise >/dev/null; then mise upgrade && mise prune -y && mise cache clear; fi"
+                "if command -v mise >/dev/null; then ${openCodeScript(updating = true)} && " +
+                "mise upgrade --exclude opencode && mise prune -y && mise cache clear; fi"
     }
 }
