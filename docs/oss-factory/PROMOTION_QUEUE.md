@@ -16,7 +16,7 @@ Direct operator scope: reconcile already-accepted Copilot work, retain its origi
 
 - Claim: https://github.com/kvnloo/omalauncher/pull/1#issuecomment-6247553908
 - Owner: codex, bounded accepted-work reconciliation for `SimonSchubert/omalauncher#129`.
-- Lease: active until final result (expires 2026-10-18T10:00:00Z). Other contribution claims are not acquired.
+- Lease: **released** after accepted-work reconciliation on 2026-10-18. Other contribution claims were not acquired.
 
 ## Ready
 
@@ -45,7 +45,7 @@ The following original carriers are indexed, not closed or taken over. Their lin
 - [Maintainer acceptance](https://github.com/SimonSchubert/omalauncher/pull/129#issuecomment-6225151084) records the rebase and two deliberate changes: retain `everyAgentHasAWindowAlias` and omit per-agent README detail. Preserve these decisions rather than restore obsolete proposed text.
 - Historical [hosted CI](https://github.com/kvnloo/omalauncher/actions/runs/38692310927) covers older `295d17f06d2d4f57927456359c28dca66cad1bc2`, not the final rebased head. It remains app/OWL/OWL-JAR and CLI-parser evidence, **not** authenticated Copilot chat, physical-device acceptance or APK validation. No tests were run for this metadata-only reconciliation.
 - Full carrier/origin comments, submitted reviews and inline threads were read. No ongoing request requires this carrier to stay open; the recorded instruction is to keep it **unmerged**, which closure without merge preserves. The canonical queue is this separate document/PR, not carrier 1.
-- Disposition: **LANDED** source acceptance; fork carrier closeout pending the final current-head receipt. Original PR, commits, authorship and historical evidence are retained. This is historical reconciliation, not a new origin outcome.
+- Disposition: **LANDED**; [substantive exact-head receipt](https://github.com/kvnloo/omalauncher/pull/1#issuecomment-6247570070). Fork carrier 1 was **CLOSED, not merged**, at `2026-10-18T08:20:31Z`. Its branch was observed **retained after closure** at exact `7bd3951082b18b18aecf4d334970521ac2e8961b`. Original PR, commits, authorship and historical evidence remain. This is historical reconciliation, not a new origin outcome.
 
 ## Lossless legacy routing and credit
 
