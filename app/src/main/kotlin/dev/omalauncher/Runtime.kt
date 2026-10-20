@@ -225,9 +225,13 @@ class Runtime(
                         proot.prepare()
                         prepared = true
                     }
+                    bootstrap.dns.start()
                 }
                 work()
-                if (bootstrap.isInstalled) onLinuxReady() else setService(false)
+                if (bootstrap.isInstalled) onLinuxReady() else {
+                    bootstrap.dns.stop()
+                    setService(false)
+                }
             }
     }
 
@@ -244,6 +248,7 @@ class Runtime(
                 widgets.linuxChanged(false)
                 audio.stop()
                 withContext(Dispatchers.IO) { proot.killAll() }
+                bootstrap.dns.stop()
                 bootstrap.remove()
                 withContext(Dispatchers.IO) {
                     updates.forget()
