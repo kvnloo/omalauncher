@@ -6,6 +6,35 @@ import org.junit.Test
 import java.io.File
 
 class AgentsTest {
+
+    /** First-run setup and later Linux installation both enumerate AGENTS. */
+    @Test fun hermesIsOfferedWithItsOwnInstaller() {
+        val agent = AGENTS.single { it.bin == "hermes" }
+        assertEquals("Hermes Agent", agent.name)
+        assertTrue(agent.install!!.contains("--non-interactive"))
+        assertTrue(agent.install!!.contains("UV_LINK_MODE=copy"))
+        assertTrue(agent.install!!.contains("--skip-browser"))
+    }
+
+    /** A widget prompt must not be evaluated by the guest shell as options or commands. */
+    @Test fun hermesPromptUsesChatQueryFlagWithOneLiteralArgument() {
+        val prompt = "--help; $(exit 99) 'quoted'"
+        val script = """
+            set -- ${agentInvocation("hermes", prompt)}
+            test "${'$'}#" -eq 4 &&
+            test "${'$'}1" = hermes &&
+            test "${'$'}2" = chat &&
+            test "${'$'}3" = -q &&
+            test "${'$'}4" = " ${'$'}EXPECTED_PROMPT"
+        """.trimIndent()
+        val process = ProcessBuilder("sh", "-c", script)
+            .redirectErrorStream(true)
+            .apply { environment()["EXPECTED_PROMPT"] = prompt }
+            .start()
+        val output = process.inputStream.bufferedReader().use { it.readText() }
+        assertEquals(output, 0, process.waitFor())
+    }
+
     /** A missing alias would make opening that agent's window throw. */
     @Test fun everyAgentHasAWindowAlias() {
         val manifest = File("src/main/AndroidManifest.xml").readText()
