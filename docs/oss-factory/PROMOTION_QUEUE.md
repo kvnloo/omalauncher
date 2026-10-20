@@ -25,6 +25,13 @@ Direct operator scope: reconcile already-accepted Copilot work, retain its origi
 - Follow-up `b9c36ca82af63f8816105b625b0126f4dbbbdc20` prevents a failed curl from looking like a successful Hermes install and leaves existing `uv.toml` unchanged. Two shell subprocess regressions added; [exact-head CI](https://github.com/kvnloo/omalauncher/actions/runs/39437809691) needs to pass before reclassification.
 - **HOLD / native gate:** fork's third-party proot compatibility dependency must be reviewed, and a real Arch/proot install, CLI prompt and Android APK still need verification. Existing uv config may require explicit copy link mode for standalone guest use. No upstream promotion or actual device validation claimed.
 
+## Upstream promotion blockers refreshed 2026-10-20
+
+- **Merge conflicts:** [#38 dictation](https://github.com/SimonSchubert/omalauncher/pull/38), [#40 multitouch](https://github.com/SimonSchubert/omalauncher/pull/40), [#130 terminal lifecycle](https://github.com/SimonSchubert/omalauncher/pull/130), and [#158 live-window recovery](https://github.com/SimonSchubert/omalauncher/pull/158) all currently report `mergeable_state=dirty`. Reconcile against current upstream first, particularly the October 19 home/OWL panel changes; do not assume older test results prove the new merge tree.
+- **Upstream [#128 Tern gestures](https://github.com/SimonSchubert/omalauncher/pull/128):** `mergeable=true` but `mergeable_state=unstable`, with no submitted reviews. Existing fork [CI proof](https://github.com/kvnloo/omalauncher/actions/runs/38853703975) concerns an older verified head and is not physical-device gesture acceptance. Prioritize native Android/Tern proof and an exact current-head check.
+- **DeseretSaint's original [#85 Hermes](https://github.com/SimonSchubert/omalauncher/pull/85):** also reports `dirty`. Retain original author ownership, offer verified fixes upstream after fork QA rather than opening a duplicate.
+- These are current mergeability reads, **not** maintainer rejections or new permission to force-push/rebase someone else's work.
+
 ## Ready
 
 None verified ready by this coordination-only audit.
