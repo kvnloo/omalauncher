@@ -189,12 +189,12 @@ private fun DesktopScreen(
     }
 
     if (panelShown) {
-        // Near-opaque like stock drawers: home widgets bleeding through made icons hard to read.
+        // Near-opaque by default; users can choose a fully opaque or more translucent drawer.
         Box(
             Modifier
                 .fillMaxSize()
                 .graphicsLayer { alpha = state.drawer.value.coerceAtMost(1f) }
-                .background(Palette.background.copy(alpha = 0.97f))
+                .background(Palette.background.copy(alpha = LauncherStyle.style[Style.DRAWER_OPACITY].toFloat()))
                 .clickable { state.close() }
                 .drawerSwipe(state),
         )
