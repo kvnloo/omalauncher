@@ -119,6 +119,18 @@ These drafts target a pinned upstream-main baseline on the owner fork, and are *
 
 Other origin carriers [#38](https://github.com/SimonSchubert/omalauncher/pull/38), [#40](https://github.com/SimonSchubert/omalauncher/pull/40), [#128](https://github.com/SimonSchubert/omalauncher/pull/128), and [#130](https://github.com/SimonSchubert/omalauncher/pull/130) remained open during this audit; their existing physical-signing/gesture/lifecycle gates remain. [#129](https://github.com/SimonSchubert/omalauncher/pull/129) remains the verified upstream merge. No origin PR, default-branch merge, maintainer ping, or device installation is performed by this queue update.
 
+## 2026-10-20 origin-head refresh (#158, #130) and drawer keyboard test
+
+This is the current evidence for the new independent user-directed engineering wave. Earlier head values elsewhere in this file are historical snapshots. Preserve those links and the original PR authorship.
+
+| Work | Verified origin/fork state | Remaining gate |
+| --- | --- | --- |
+| [Upstream #158 — recover live Linux windows](https://github.com/SimonSchubert/omalauncher/pull/158) | Original fork head `802f243` merged history-preservingly with upstream Omalauncher 0.10.0 `5350524` to current PR head [`6894e69`](https://github.com/kvnloo/omalauncher/commit/6894e693dba9598caf1be19d115bb415235ea4de), preserving its exact nine-file recovery diff. GitHub reports **mergeable=true**. [Origin CI #277](https://github.com/SimonSchubert/omalauncher/actions/runs/39439401520) **PASS**, including app/OWL tests, OWL JAR, debug assembly and lint. | Maintainer review/merge. Four earlier physical Galaxy S25 Ultra instrumentation scenarios were on the **prior head**, not rerun against this merge. No production APK installed. A non-essential maintainer update comment attempt received connector HTTP 403; do not claim it posted. |
+| [Upstream #130 — terminal tiles stay stopped after exit](https://github.com/SimonSchubert/omalauncher/pull/130) | Original fork head `22249bc` merged history-preservingly with upstream `5350524` to [`6279a25`](https://github.com/kvnloo/omalauncher/commit/6279a25829e616f4fa6b01767783eb3a6f7c813d). Exactly **two** intended files differ from upstream. GitHub reports **mergeable=true**. [Origin CI #278](https://github.com/SimonSchubert/omalauncher/actions/runs/39440054992): JVM Test stage PASS; Android build/lint still running when checked. | Confirm exact-head completed CI; maintainer review. Prior isolated terminal lifecycle smoke is not physical Android paging proof. No APK installed. |
+| [Issue #178 — optional drawer keyboard](https://github.com/SimonSchubert/omalauncher/issues/178) | Fork branch [`fix/drawer-keyboard-focus-178`](https://github.com/kvnloo/omalauncher/tree/fix/drawer-keyboard-focus-178), head `d3d2f030909a97774b907e0f9a1321d62bb18ff4`, based on upstream `5350524`. Adds persisted on-open/on-tap focus preference, isolates the focus policy and four JUnit regression scenarios (source added, **not run**). Exactly three source/test files changed. | Authorized upstream PR creation and exact-head CI/Android acceptance. The upstream create-PR attempt received GitHub connector HTTP 403; no origin PR or passing test suite claimed. |
+
+This wave does not duplicate [Hermes origin #85](https://github.com/SimonSchubert/omalauncher/pull/85), already authored by DeseretSaint and separately integrated for fork QA. No other upstream PR or extra promotion queue created.
+
 ## Lossless legacy routing and credit
 
 The full original bodies, comments, attribution, evidence and past claims remain unchanged at these linked archival sources; no legacy thread is deleted or silently rewritten:
