@@ -64,10 +64,15 @@ val AGENTS =
             // repo it clones is redirected. Set HERMES_REPO_URL="" to install vanilla upstream.
             install = "mkdir -p ~/.config/uv && printf '%s\\n' " +
                 "'link-mode = \"copy\"' > ~/.config/uv/uv.toml && " +
-                "curl -fsSL https://hermes-agent.nousresearch.com/install.sh | " +
-                "env UV_LINK_MODE=copy " +
+                // A failed download must fail the install. Without pipefail, bash can
+            // receive empty stdin and exit 0, misleading the setup and agent manager.
+            "env UV_LINK_MODE=copy " +
                 "HERMES_REPO_URL=https://github.com/DeseretSaint/hermes-agent.git " +
-                "bash -s -- --non-interactive --skip-browser --skip-computer-use",
+                "bash -o pipefail -c " +
+                shellQuote(
+                    "curl -fsSL https://hermes-agent.nousresearch.com/install.sh | " +
+                        "bash -s -- --non-interactive --skip-browser --skip-computer-use",
+                ),
         ),
         Agent("omp", "Oh My Pi", "Pi with tools and plugins built in", "github:can1357/oh-my-pi"),
         Agent("ori", "Ori", "OpenRouter's coding agent", "github:OpenRouterLabs/ori-releases", command = "ori code"),
