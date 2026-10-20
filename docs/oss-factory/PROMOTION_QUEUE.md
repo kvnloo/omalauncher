@@ -120,3 +120,16 @@ The full original bodies, comments, attribution, evidence and past claims remain
 - Peer-review provenance remains [QA 117](https://github.com/kvnloo/oss-factory/issues/117) for [origin 66](https://github.com/SimonSchubert/omalauncher/pull/66) and [QA 118](https://github.com/kvnloo/oss-factory/issues/118) for [origin 58](https://github.com/SimonSchubert/omalauncher/pull/58); no peer candidate is duplicated or reclassified here.
 
 Legacy references to Linear or factory-local routing are historical, not current authority. Explicit human instructions and the current factory control/HITL policy govern new actions. The parent coordinator owns the registry/directory redirect; continuing project detail belongs here. No broad project queue-clean or merge-readiness claim is made.
+
+
+## Mandatory preflight: prevent parallel duplicate work
+
+Before creating **any** Omalauncher implementation branch, fork QA PR or upstream PR:
+
+1. Read this queue and its linked origin carriers **first**. Search upstream issues **and all PRs by issue number**, not just a keyword/title search. Inspect the candidate's actual file diff, author and recent checks.
+2. Check currently active fork branches/QA PRs and ongoing workers. Prefer improving the original upstream carrier with consent and review over parallel overlapping implementations. Do not create an upstream competitor while the origin PR is open.
+3. Work from a specific current upstream SHA on an isolated branch. Verify the PR changes only intended files; fork `main` may be stale. Re-read the blob SHA before every write to avoid overwriting concurrent workers.
+4. Report CI only for the **exact head SHA**. Separate JVM/build/lint evidence from APK and physical phone acceptance.
+5. If a duplicate is discovered, close its QA carrier **unmerged** with a link to the original, preserve attribution and avoid further promotion. Example: [closed fork QA #11](https://github.com/kvnloo/omalauncher/pull/11) overlaps the prior, fully tested [upstream #158](https://github.com/SimonSchubert/omalauncher/pull/158), which remains the canonical implementation for [#157](https://github.com/SimonSchubert/omalauncher/issues/157).
+
+This gate applies to future waves even when earlier results have disappeared from a GitHub keyword search.
