@@ -141,6 +141,20 @@ This wave does not duplicate [Hermes origin #85](https://github.com/SimonSchuber
 - **DNS #12:** [exact-head hosted CI PASS](https://github.com/kvnloo/omalauncher/actions/runs/39440269801) on `4c7a4912e3e5793e9761a1b9f0e259102e3c88ce`. **Only** VPN, Tailscale MagicDNS and physical-device validation remain as major runtime gates; treat public DNS over Android Private DNS as an unsupported parity case.
 - **Owned upstream review scan:** #38, #40, #128, #130, #158 had no recorded maintainer reviews or inline review threads during this check. Avoid sending duplicate progress-only comments.
 
+## 2026-10-20: Native Tern/IME PR sync to upstream 0.10.0
+
+These are **existing upstream PRs**, updated history-preservingly from current upstream main `53505248b9f8616fe308c4972cbbf2f6693a6946`. They were neither merged upstream nor converted out of draft. The separate physical-device gates still apply.
+
+| Original PR | New source head, status, evidence | Gate |
+| --- | --- | --- |
+| [#128 Tern gestures](https://github.com/SimonSchubert/omalauncher/pull/128) | `ddd28f699dca233e38993eb5a16448071c2c6790` (9 files); **mergeable**, review-ready. The new exact-head [upstream CI #282](https://github.com/SimonSchubert/omalauncher/actions/runs/39443871610) **PASSED**. Original gesture implementation and tests remain unchanged; README and architecture notes include both upstream additions and this PR's details. | Maintainer review and real Android touch-routing acceptance on a signed-compatible isolated install. Do not claim phone tested on this commit. |
+| [#38 IME/dictation](https://github.com/SimonSchubert/omalauncher/pull/38) | `7fb37bd7216acf5fc132969c333471fbd0e0cf90` (2 files); **mergeable, draft**. Exact-head [upstream CI #283](https://github.com/SimonSchubert/omalauncher/actions/runs/39444152219) **PASSED**. Retains the prior `KeyboardSink` implementation and all newer upstream release notes. | Physical Gboard dictation, composition, focus recovery, and alternate IME verification. No installed APK update. |
+| [#40 Wayland multi-touch](https://github.com/SimonSchubert/omalauncher/pull/40) | `33c059bffa21200bf2640d5b7bfb57e295957588` (10 files); **mergeable, draft**. Exact-head [upstream CI #284](https://github.com/SimonSchubert/omalauncher/actions/runs/39444559624) started; result was **pending** at initial check. Both this draft's multi-contact implementation and its dependency on #128's Tern gestures remain in the source. | Wait for CI; physical multi-touch/cancellation acceptance. If #128 lands via squash/rebase, reconcile #40 against the accepted code instead of presenting duplicated diffs. No installed APK update. |
+
+**Avoid duplicate issue #178 work:** another lane already prepared [fork QA #9](https://github.com/kvnloo/omalauncher/pull/9) and [exact-head passing CI](https://github.com/kvnloo/omalauncher/actions/runs/39437574713). That is the existing tested drawer-keyboard publication candidate; do **not** submit a competing origin PR or repeat the write request that GitHub rejected with 403. An older local branch `fix/drawer-keyboard-focus-178` is not the chosen publication source.
+
+No new upstream PR, duplicate issue, reviewer ping, author credit change, or upstream merge was made in this wave.
+
 ## Lossless legacy routing and credit
 
 The full original bodies, comments, attribution, evidence and past claims remain unchanged at these linked archival sources; no legacy thread is deleted or silently rewritten:
