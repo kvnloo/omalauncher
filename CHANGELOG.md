@@ -1,13 +1,13 @@
 # Changelog
 
+The most important changes in each release. The Play Store notes for a release
+are in `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`.
+Dates are when the build was uploaded to Play.
+
 ## Unreleased
 
 - The app drawer's background opacity can be set with `drawer.opacity` in
   style.toml, from transparent (0) to solid (1); the default stays 0.97.
-
-The most important changes in each release. The Play Store notes for a release
-are in `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`.
-Dates are when the build was uploaded to Play.
 
 ## 0.10.0 (versionCode 18) – 2026-10-20
 
