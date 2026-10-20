@@ -85,6 +85,24 @@ import androidx.compose.foundation.gestures.detectTapGestures
  */
 enum class PromptRequest { Type, Send, Listen, Release }
 
+/**
+ * Only automatic drawer opening follows the keyboard preference. A deliberate tap or Type request
+ * still focuses the bar; closing always lets go, regardless of how the drawer was opened.
+ */
+internal enum class DrawerFocusAction { Focus, Release, None }
+
+internal fun drawerFocusAction(
+    shown: Boolean,
+    autoKeyboard: Boolean,
+    listening: Boolean,
+    focused: Boolean,
+): DrawerFocusAction =
+    when {
+        shown && autoKeyboard && !listening -> DrawerFocusAction.Focus
+        !shown && focused -> DrawerFocusAction.Release
+        else -> DrawerFocusAction.None
+    }
+
 /** Height of the collapsed bar; the home grid leaves this much room for it. */
 val PromptBarHeight = 48.dp
 
@@ -207,13 +225,16 @@ internal fun PromptBar(
     }
     // The panel and the bar open and close together: opening it (Super+Space, a widget) focuses the bar, closing it lets go.
     LaunchedEffect(panelShown, drawerKeyboard) {
-        // Browsing the drawer need not show the keyboard; tapping the bar or an explicit Type request still does.
-        if (panelShown && !speech.listening && drawerKeyboard) {
-            focus.requestFocus()
-            keyboard?.show()
-        } else if (!panelShown && focused) {
-            focusManager.clearFocus()
-            keyboard?.hide()
+        when (drawerFocusAction(panelShown, drawerKeyboard, speech.listening, focused)) {
+            DrawerFocusAction.Focus -> {
+                focus.requestFocus()
+                keyboard?.show()
+            }
+            DrawerFocusAction.Release -> {
+                focusManager.clearFocus()
+                keyboard?.hide()
+            }
+            DrawerFocusAction.None -> Unit
         }
     }
     BackHandler(enabled = speech.listening) { speech.cancel() }
