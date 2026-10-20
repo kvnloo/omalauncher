@@ -123,6 +123,21 @@ class StyleTest {
         }
     }
 
+    @Test fun drawerKeyboardDefaultsOnAndCanBeDisabled() {
+        assertTrue(Style()[Style.DRAWER_KEYBOARD])
+        assertTrue("drawer-keyboard = true" in StyleFile.defaultsText())
+        val disabled = StyleFile.decode(Toml.parse("[home]\ndrawer-keyboard = false\n"))
+        assertTrue(disabled.problems.isEmpty())
+        assertFalse(disabled.style[Style.DRAWER_KEYBOARD])
+        val written = Toml.write(StyleFile.encode(emptyMap(), disabled.style))
+        assertTrue("drawer-keyboard = false" in written)
+        assertFalse(StyleFile.decode(Toml.parse(written)).style[Style.DRAWER_KEYBOARD])
+        val invalid = StyleFile.decode(mapOf("home.drawer-keyboard" to "never"), disabled.style)
+        assertFalse(invalid.style[Style.DRAWER_KEYBOARD])
+        assertEquals(listOf("home.drawer-keyboard: takes true or false; keeping false"), invalid.problems)
+        assertTrue(StyleFile.decode(emptyMap(), disabled.style).style[Style.DRAWER_KEYBOARD])
+    }
+
     @Test fun absentKeysAreDefaultsNotThePreviousValues() {
         val previous = Style().with(Style.GAPS_IN, 10.0)
         assertEquals(6.0, StyleFile.decode(emptyMap(), previous).style[Style.GAPS_IN], 0.0)
