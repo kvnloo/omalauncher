@@ -84,6 +84,10 @@ import androidx.compose.foundation.gestures.detectTapGestures
  */
 enum class PromptRequest { Type, Send, Listen, Release }
 
+/** A drawer opened by swipe may stay keyboard-free; tapping the bar has its own focus path. */
+internal fun shouldAutoFocusDrawerSearch(panelShown: Boolean, listening: Boolean, focusOnOpen: Boolean): Boolean =
+    panelShown && !listening && focusOnOpen
+
 /** Height of the collapsed bar; the home grid leaves this much room for it. */
 val PromptBarHeight = 48.dp
 
@@ -207,7 +211,7 @@ internal fun PromptBar(
     // explicitly tapping the bar or requesting PromptRequest.Type still focuses it for typing.
     LaunchedEffect(panelShown) {
         // Opened to dictate, the keyboard stays down.
-        if (panelShown && !speech.listening && runtime.gestures.focusSearchOnDrawerOpen) {
+        if (shouldAutoFocusDrawerSearch(panelShown, speech.listening, runtime.gestures.focusSearchOnDrawerOpen)) {
             focus.requestFocus()
             keyboard?.show()
         } else if (!panelShown && focused) {
