@@ -22,7 +22,7 @@ Direct operator scope: reconcile already-accepted Copilot work, retain its origi
 
 - Fork QA [PR #8](https://github.com/kvnloo/omalauncher/pull/8), branch `feat/hermes-installer-setup`. Distinct from [original upstream PR #85](https://github.com/SimonSchubert/omalauncher/pull/85) by **DeseretSaint**; integration retains the original branch as a merge parent, and must not become a competing upstream PR.
 - First exact head `45ad1c5c71be7fe1adb3b1476b6e0ced2ecc4626` passed [GitHub Actions CI](https://github.com/kvnloo/omalauncher/actions/runs/39376700131) (app and OWL tests, build, lint).
-- Follow-up `b9c36ca82af63f8816105b625b0126f4dbbbdc20` prevents a failed curl from looking like a successful Hermes install and leaves existing `uv.toml` unchanged. Two shell subprocess regressions added; [exact-head CI](https://github.com/kvnloo/omalauncher/actions/runs/39437809691) needs to pass before reclassification.
+- Hardened branch head `dd829d108d969cef9455c8d694cc09a195c4b9b9` propagates installer curl failures and preserves existing `uv.toml`; shell subprocess regressions cover successful and failed mock downloads. **Exact-head [CI PASS](https://github.com/kvnloo/omalauncher/actions/runs/39438039870)**: OWL/app tests, OWL JAR, debug APK build and Android lint. Earlier intermediate test-fixture failures were corrected before this head.
 - **HOLD / native gate:** fork's third-party proot compatibility dependency must be reviewed, and a real Arch/proot install, CLI prompt and Android APK still need verification. Existing uv config may require explicit copy link mode for standalone guest use. No upstream promotion or actual device validation claimed.
 
 ## Upstream promotion blockers refreshed 2026-10-20
