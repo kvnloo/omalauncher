@@ -31,6 +31,9 @@ data class Agent(
     val windowAlias get() = bin.split('-').joinToString("") { it.replaceFirstChar(Char::uppercase) } + "Window"
 }
 
+/** Fail the install when either the download or the downloaded script fails. */
+internal fun checkedInstallerPipeline(script: String) = "bash -o pipefail -c ${shellQuote(script)}"
+
 /** Omarchy's arm64 agents, plus Hermes with its own installer. */
 val AGENTS =
     listOf(
@@ -70,8 +73,10 @@ val AGENTS =
                 "HERMES_REPO_URL=https://github.com/DeseretSaint/hermes-agent.git " +
                 "bash -o pipefail -c " +
                 shellQuote(
+                    checkedInstallerPipeline(
                     "curl -fsSL https://hermes-agent.nousresearch.com/install.sh | " +
-                        "bash -s -- --non-interactive --skip-browser --skip-computer-use",
+                            "bash -s -- --non-interactive --skip-browser --skip-computer-use",
+                ),
                 ),
         ),
         Agent("omp", "Oh My Pi", "Pi with tools and plugins built in", "github:can1357/oh-my-pi"),
