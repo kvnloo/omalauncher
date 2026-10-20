@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.PopupPositionProvider
 import dev.omalauncher.Runtime
+import dev.omalauncher.theme.Style
 import dev.omalauncher.linux.LinuxState
 import dev.omalauncher.linux.agentInvocation
 import kotlinx.coroutines.flow.collectLatest
@@ -110,6 +111,7 @@ internal fun PromptBar(
     val text = state.query
     var focused by remember { mutableStateOf(false) }
     val panelShown by remember(state) { derivedStateOf { state.drawer.value > 0.01f } }
+    val drawerKeyboard = runtime.style.style[Style.DRAWER_KEYBOARD]
     val agent = runtime.agents.default
     val linuxState by runtime.bootstrap.state.collectAsState()
     // Agents run in Linux: without it, the bar offers to install it instead.
@@ -204,9 +206,9 @@ internal fun PromptBar(
         state.promptRequest = null
     }
     // The panel and the bar open and close together: opening it (Super+Space, a widget) focuses the bar, closing it lets go.
-    LaunchedEffect(panelShown) {
-        // Opened to dictate, the keyboard stays down.
-        if (panelShown && !speech.listening) {
+    LaunchedEffect(panelShown, drawerKeyboard) {
+        // Browsing the drawer need not show the keyboard; tapping the bar or an explicit Type request still does.
+        if (panelShown && !speech.listening && drawerKeyboard) {
             focus.requestFocus()
             keyboard?.show()
         } else if (!panelShown && focused) {
