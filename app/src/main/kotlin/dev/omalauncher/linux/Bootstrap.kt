@@ -131,6 +131,9 @@ class Bootstrap(
     /** The guest's files; see [Provisioner]. */
     private val provisioner: Provisioner,
 ) {
+    /** Keeps guest resolver aligned with Android’s default network and VPN. */
+    val dns = AndroidDns(context, File(proot.rootfs, "etc/resolv.conf"))
+
     private val _state = MutableStateFlow<LinuxState>(LinuxState.Checking)
     val state = _state.asStateFlow()
 
@@ -482,10 +485,10 @@ class Bootstrap(
 
     private fun configure() {
         val root = proot.rootfs
-        File(root, "etc/resolv.conf").apply {
-            delete()
-            writeText("nameserver 8.8.8.8\nnameserver 1.1.1.1\n")
-        }
+        // Replace the image’s resolver (including an optional symlink) with Android’s
+        // active-network DNS. Subsequent network and VPN changes refresh this file.
+        File(root, "etc/resolv.conf").delete()
+        dns.refresh()
         File(root, "etc/hosts").writeText("127.0.0.1 localhost\n::1 localhost\n")
         File(root, "etc/locale.conf").writeText("LANG=C.UTF-8\n")
         // The geo-balanced default mirror often lags behind; pacman falls through this list on 404s.
