@@ -131,6 +131,16 @@ This is the current evidence for the new independent user-directed engineering w
 
 This wave does not duplicate [Hermes origin #85](https://github.com/SimonSchubert/omalauncher/pull/85), already authored by DeseretSaint and separately integrated for fork QA. No other upstream PR or extra promotion queue created.
 
+### Origin publishing gate — permission failure (October 20)
+
+- **Promotion candidate:** [fork QA #9](https://github.com/kvnloo/omalauncher/pull/9), issue [SimonSchubert/omalauncher#178](https://github.com/SimonSchubert/omalauncher/issues/178), exact head `ec8f90a2d790a9e6211c2c69f07dce17fb919001`.
+- **Checks:** [hosted CI PASS](https://github.com/kvnloo/omalauncher/actions/runs/39437574713), Android assembly and lint, and current upstream-main compare: **4 commits ahead / 0 behind, 4 intended files**. No duplicate upstream PR found in search. Default behavior unchanged; physical keyboard/IME acceptance still unknown.
+- **Write failure:** Attempted to create *one* origin PR using the connected GitHub integration; GitHub returned HTTP **403 `Resource not accessible by integration`**. The origin PR **was not created**. No second attempt, reviewer ping, or upstream issue comment should be made until a write-capable user-scoped credential or authorized computer session is available. No authenticated `gh` CLI is present in this execution environment.
+- **Ready-to-publish head:** `kvnloo:fix/optional-drawer-keyboard-178` → `SimonSchubert/omalauncher:main`; title **Let users open the app drawer without automatically showing the keyboard**. Include `Closes #178`, retain haxx0071's original report and ronyalves083's analysis and honest no-device-test caveat. Use the full tested source head, not a new or duplicate implementation.
+- **After publication:** wait for origin workflow authorization, adjust to maintainer feedback, and run signed/isolated-device acceptance without replacing the current installed launcher.
+- **DNS #12:** [exact-head hosted CI PASS](https://github.com/kvnloo/omalauncher/actions/runs/39440269801) on `4c7a4912e3e5793e9761a1b9f0e259102e3c88ce`. **Only** VPN, Tailscale MagicDNS and physical-device validation remain as major runtime gates; treat public DNS over Android Private DNS as an unsupported parity case.
+- **Owned upstream review scan:** #38, #40, #128, #130, #158 had no recorded maintainer reviews or inline review threads during this check. Avoid sending duplicate progress-only comments.
+
 ## Lossless legacy routing and credit
 
 The full original bodies, comments, attribution, evidence and past claims remain unchanged at these linked archival sources; no legacy thread is deleted or silently rewritten:
