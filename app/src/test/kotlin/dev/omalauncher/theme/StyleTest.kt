@@ -123,6 +123,29 @@ class StyleTest {
         }
     }
 
+    @Test fun drawerOpacityDefaultsAndRoundTrips() {
+        assertEquals(0.97, Style()[Style.DRAWER_OPACITY], 0.0)
+        val defaults = StyleFile.defaultsText()
+        assertTrue(defaults.contains("[drawer]"))
+        assertTrue(defaults.contains("opacity = 0.97"))
+
+        for (opacity in listOf(0.0, 0.45, 1.0)) {
+            val parsed = Toml.parse("[drawer]\nopacity = $opacity\n")
+            val decoded = StyleFile.decode(parsed)
+            assertEquals(emptyList<String>(), decoded.problems)
+            assertEquals(opacity, decoded.style[Style.DRAWER_OPACITY], 0.0)
+            val roundTrip = StyleFile.decode(Toml.parse(Toml.write(StyleFile.encode(parsed, decoded.style))))
+            assertEquals(emptyList<String>(), roundTrip.problems)
+            assertEquals(opacity, roundTrip.style[Style.DRAWER_OPACITY], 0.0)
+        }
+
+        for (bad in listOf(-0.1, 1.1, "opaque")) {
+            val decoded = StyleFile.decode(mapOf("drawer.opacity" to bad))
+            assertEquals(0.97, decoded.style[Style.DRAWER_OPACITY], 0.0)
+            assertEquals(1, decoded.problems.size)
+        }
+    }
+
     @Test fun absentKeysAreDefaultsNotThePreviousValues() {
         val previous = Style().with(Style.GAPS_IN, 10.0)
         assertEquals(6.0, StyleFile.decode(emptyMap(), previous).style[Style.GAPS_IN], 0.0)
