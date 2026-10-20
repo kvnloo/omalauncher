@@ -53,8 +53,9 @@ val AGENTS =
             // --link2symlink with /tmp bound elsewhere, so those links fail; copy instead.
             // The install command's UV_LINK_MODE=copy only reaches the install: at runtime
             // `hermes chat -q` re-runs uv without it and dies ("Operation not permitted",
-            // os error 1, on a hardlink out of ~/.hermes/cache/uv/archive-v0). Write uv.toml
-            // so every later uv run — chat, update, doctor — copies too.
+            // os error 1, on a hardlink out of ~/.hermes/cache/uv/archive-v0). Create uv.toml
+            // only if missing: existing user uv settings must not be overwritten.
+            // Existing configs may need link-mode = "copy" for later standalone use.
             //
             // HERMES_REPO_URL points the clone at the DeseretSaint fork, which carries the
             // proot fixes upstream lacks: pm forwards UV_LINK_MODE into its runtime sync
@@ -64,14 +65,14 @@ val AGENTS =
             // repo it clones is redirected. Set HERMES_REPO_URL="" to install vanilla upstream.
             // A failed download must fail the install. Without pipefail, bash may
             // receive empty stdin and exit 0, misleading setup and the agent manager.
-            install = "mkdir -p ~/.config/uv && printf '%s\\n' " +
-                "'link-mode = \"copy\"' > ~/.config/uv/uv.toml && " +
+            install = "mkdir -p ~/.config/uv && " +
+                "{ [ -e ~/.config/uv/uv.toml ] || [ -L ~/.config/uv/uv.toml ] || " +
+                "printf '%s\\n' 'link-mode = \"copy\"' > ~/.config/uv/uv.toml; } && " +
+                "installer=\$(mktemp) && trap 'rm -f \"\$installer\"' EXIT && " +
+                "curl -fsSL https://hermes-agent.nousresearch.com/install.sh -o \"\$installer\" && " +
                 "env UV_LINK_MODE=copy " +
                 "HERMES_REPO_URL=https://github.com/DeseretSaint/hermes-agent.git " +
-                checkedInstallerPipeline(
-                    "curl -fsSL https://hermes-agent.nousresearch.com/install.sh | " +
-                        "bash -s -- --non-interactive --skip-browser --skip-computer-use",
-                ),
+                "bash \"\$installer\" --non-interactive --skip-browser --skip-computer-use",
         ),
         Agent("omp", "Oh My Pi", "Pi with tools and plugins built in", "github:can1357/oh-my-pi"),
         Agent("ori", "Ori", "OpenRouter's coding agent", "github:OpenRouterLabs/ori-releases", command = "ori code"),
