@@ -62,14 +62,13 @@ val AGENTS =
             // and install.sh recovers a commit-graph-corrupt checkout with `git fetch
             // --refetch`. The installer script still comes from the upstream CDN; only the
             // repo it clones is redirected. Set HERMES_REPO_URL="" to install vanilla upstream.
+            // A failed download must fail the install. Without pipefail, bash may
+            // receive empty stdin and exit 0, misleading setup and the agent manager.
             install = "mkdir -p ~/.config/uv && printf '%s\\n' " +
                 "'link-mode = \"copy\"' > ~/.config/uv/uv.toml && " +
-                // A failed download must fail the install. Without pipefail, bash can
-            // receive empty stdin and exit 0, misleading the setup and agent manager.
-            "env UV_LINK_MODE=copy " +
+                "env UV_LINK_MODE=copy " +
                 "HERMES_REPO_URL=https://github.com/DeseretSaint/hermes-agent.git " +
-                "bash -o pipefail -c " +
-                shellQuote(
+                checkedInstallerPipeline(
                     "curl -fsSL https://hermes-agent.nousresearch.com/install.sh | " +
                         "bash -s -- --non-interactive --skip-browser --skip-computer-use",
                 ),
