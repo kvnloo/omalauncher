@@ -173,7 +173,7 @@ internal fun AgentPicker(
     Column {
         Label("coding agents")
         BasicText(
-            "Pick any to install with Linux. You can add or remove them later in settings.",
+            "Pick any to install with Linux. Hermes uses its own installer; manage agents later in settings.",
             Modifier.padding(top = 4.dp, bottom = 14.dp),
             style = Mono.copy(color = Subtle, fontSize = TextSize.Small),
         )

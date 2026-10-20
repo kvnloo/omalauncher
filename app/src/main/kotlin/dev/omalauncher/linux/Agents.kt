@@ -13,7 +13,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.LinkOption
 
-/** A coding agent CLI, installed the way Omarchy's omarchy-default-agent does it: via mise. */
+/** A coding agent CLI, normally installed via mise; Hermes has its own installer. */
 data class Agent(
     val bin: String,
     val name: String,
@@ -24,12 +24,14 @@ data class Agent(
     val command: String = bin,
     /** Whether mise needs node to install it: npm packages run their postinstall scripts with it. */
     val node: Boolean = pkg.startsWith("npm:"),
+    /** An optional first-party installer for agents not distributed through mise. */
+    val install: String? = null,
 ) {
     /** Its activity alias in the manifest (cursor-agent -> CursorAgentWindow), so Recents names its window after it. */
     val windowAlias get() = bin.split('-').joinToString("") { it.replaceFirstChar(Char::uppercase) } + "Window"
 }
 
-/** Omarchy's agent list (omarchy-default-agent), limited to ones mise can install on arm64. */
+/** Omarchy's arm64 agents, plus Hermes with its own installer. */
 val AGENTS =
     listOf(
         Agent("claude", "Claude Code", "Anthropic's coding agent", "claude"),
@@ -42,6 +44,36 @@ val AGENTS =
         Agent("cursor-agent", "Cursor CLI", "Cursor's agent for the terminal", "cursor-agent"),
         Agent("agy", "Antigravity", "Google's Gemini coding agent", "antigravity-cli"),
         Agent("pi", "Pi", "Minimal, extensible coding agent", "pi"),
+        Agent(
+            "hermes",
+            "Hermes Agent",
+            "Nous Research's agent; on this phone or another machine",
+            "hermes",
+            // uv hardlinks wheels out of its cache, and the guest runs under proot's
+            // --link2symlink with /tmp bound elsewhere, so those links fail; copy instead.
+            // The install command's UV_LINK_MODE=copy only reaches the install: at runtime
+            // `hermes chat -q` re-runs uv without it and dies ("Operation not permitted",
+            // os error 1, on a hardlink out of ~/.hermes/cache/uv/archive-v0). Create uv.toml
+            // only if missing: existing user uv settings must not be overwritten.
+            // Existing configs may need link-mode = "copy" for later standalone use.
+            //
+            // HERMES_REPO_URL points the clone at the DeseretSaint fork, which carries the
+            // proot fixes upstream lacks: pm forwards UV_LINK_MODE into its runtime sync
+            // (otherwise the pm-runtime `uv sync` hardlinks and dies under --link2symlink),
+            // and install.sh recovers a commit-graph-corrupt checkout with `git fetch
+            // --refetch`. The installer script still comes from the upstream CDN; only the
+            // repo it clones is redirected. Set HERMES_REPO_URL="" to install vanilla upstream.
+            // A failed download must fail the install. Without pipefail, bash may
+            // receive empty stdin and exit 0, misleading setup and the agent manager.
+            install = "mkdir -p ~/.config/uv && " +
+                "{ [ -e ~/.config/uv/uv.toml ] || [ -L ~/.config/uv/uv.toml ] || " +
+                "printf '%s\\n' 'link-mode = \"copy\"' > ~/.config/uv/uv.toml; } && " +
+                "installer=\$(mktemp) && trap 'rm -f \"\$installer\"' EXIT && " +
+                "curl -fsSL https://hermes-agent.nousresearch.com/install.sh -o \"\$installer\" && " +
+                "env UV_LINK_MODE=copy " +
+                "HERMES_REPO_URL=https://github.com/DeseretSaint/hermes-agent.git " +
+                "bash \"\$installer\" --non-interactive --skip-browser --skip-computer-use",
+        ),
         Agent("omp", "Oh My Pi", "Pi with tools and plugins built in", "github:can1357/oh-my-pi"),
         Agent("ori", "Ori", "OpenRouter's coding agent", "github:OpenRouterLabs/ori-releases", command = "ori code"),
         Agent(
@@ -68,7 +100,7 @@ val MISE_NODE_FOR_AGENTS =
     }
 
 /**
- * Starts [agentBin] with a first prompt; OpenCode takes it as --prompt, Antigravity and Copilot as -i (they
+ * Starts [agentBin] with a first prompt; OpenCode uses --prompt, Hermes chat -q, Antigravity and Copilot -i (they
  * refuse a bare argument), the others as an argument.
  * Ori's agent is `ori code`, which stays open only with --interactive. Kimi takes a prompt only in
  * print mode, so the session it ran in is continued after the answer.
@@ -85,6 +117,7 @@ fun agentInvocation(
     val quoted = shellQuote(if (prompt.startsWith("-")) " $prompt" else prompt)
     return when {
         agentBin == "opencode" -> "$agentBin --prompt $quoted"
+        agentBin == "hermes" -> "$agentBin chat -q $quoted"
         agentBin == "copilot" -> "$agentBin -i $quoted"
         agentBin == "claude" && readOnly -> "$agentBin --permission-mode plan $quoted"
         agentBin == "ori" -> "ori code --interactive --prompt $quoted"
@@ -102,11 +135,16 @@ class AgentStore(
 ) {
     private val mise get() = File(proot.home, ".local/bin/mise")
     private val shims get() = File(proot.home, ".local/share/mise/shims")
+    private val localBin get() = File(proot.home, ".local/bin")
 
     val states = mutableStateMapOf<String, JobState>()
 
-    /** Shims are symlinks to a guest path (/root/.local/bin/mise), so don't follow them from the host. */
-    fun isInstalled(agent: Agent) = Files.exists(File(shims, agent.bin).toPath(), LinkOption.NOFOLLOW_LINKS)
+    /** Shims contain guest paths, so inspect without following host symlinks. */
+    fun isMiseInstalled(agent: Agent) = Files.exists(File(shims, agent.bin).toPath(), LinkOption.NOFOLLOW_LINKS)
+
+    /** Also recognize user-provided commands (notably Hermes' own ~/.local/bin/hermes). */
+    fun isInstalled(agent: Agent) = isMiseInstalled(agent) ||
+        Files.exists(File(localBin, agent.bin).toPath(), LinkOption.NOFOLLOW_LINKS)
 
     /** The agent picked in the prompt bar, kept in the guest home where scripts can read it too. */
     private val preferredFile get() = File(proot.launcherConfig, "agent")
@@ -140,9 +178,9 @@ class AgentStore(
     suspend fun install(agent: Agent) =
         run(agent, "installing") { installScript(agent) }.also { ok -> if (ok) onInstalled(agent) }
 
-    /** Installs [agent] with mise, bootstrapping mise itself if needed. */
+    /** Hermes uses its own installer; other agents use mise. */
     fun installScript(agent: Agent) =
-        buildString {
+        agent.install ?: buildString {
             append(if (mise.exists()) "$MISE_SELF_UPDATE && " else "curl -fsSL https://mise.run | sh && ")
             if (agent.node) append("mise use -g node@lts && ")
             append("mise use -g ${shellQuote(agent.pkg)}")
@@ -156,12 +194,14 @@ class AgentStore(
         onChanged()
     }
 
-    suspend fun remove(agent: Agent) =
-        run(agent, "removing") { "mise unuse -g ${shellQuote(agent.pkg)} && mise prune -y" }
-            .also {
-                refresh()
-                onChanged()
-            }
+    /** Do not delete commands installed by Hermes or manually by the user. */
+    suspend fun remove(agent: Agent): Boolean {
+        if (!isMiseInstalled(agent) || agent.install != null) return false
+        val ok = run(agent, "removing") { "mise unuse -g ${shellQuote(agent.pkg)} && mise prune -y" }
+        refresh()
+        onChanged()
+        return ok
+    }
 
     /** Drawer entries for the installed agents, with their logos (see [bundledIcons]); each opens in a terminal in the home directory. */
     fun managed(): List<Managed> =

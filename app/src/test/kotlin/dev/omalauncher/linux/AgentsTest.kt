@@ -4,8 +4,137 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
+import java.nio.file.Files
 
 class AgentsTest {
+
+    /** First-run setup and later Linux installation both enumerate AGENTS. */
+    @Test fun hermesIsOfferedWithItsOwnInstaller() {
+        val agent = AGENTS.single { it.bin == "hermes" }
+        assertEquals("Hermes Agent", agent.name)
+        assertTrue(agent.install!!.contains("--non-interactive"))
+        assertTrue(agent.install!!.contains("UV_LINK_MODE=copy"))
+        assertTrue(agent.install!!.contains("--skip-browser"))
+    }
+
+    /** A failed fetch must fail installation, even if the installer shell gets empty stdin. */
+    @Test fun hermesInstallerPropagatesCurlFailure() {
+        val tempHome = java.nio.file.Files.createTempDirectory("omalauncher-hermes-test").toFile()
+        try {
+            val fakeBin = File(tempHome, "bin").apply { mkdirs() }
+            val fakeCurl = File(fakeBin, "curl").apply {
+                writeText("#!/bin/sh\nexit 22\n")
+            }
+            assertTrue("cannot mark test curl executable", fakeCurl.setExecutable(true))
+
+            val process = ProcessBuilder("sh", "-c", AGENTS.single { it.bin == "hermes" }.install!!)
+                .redirectErrorStream(true)
+                .apply {
+                    environment()["HOME"] = tempHome.absolutePath
+                    environment()["PATH"] = fakeBin.absolutePath + File.pathSeparator + environment()["PATH"]
+                }
+                .start()
+            val output = process.inputStream.bufferedReader().use { it.readText() }
+            assertTrue("failed curl incorrectly reported a successful install: $output", process.waitFor() != 0)
+            assertEquals(
+                "link-mode = \"copy\"\n",
+                File(tempHome, ".config/uv/uv.toml").readText(),
+            )
+        } finally {
+            tempHome.deleteRecursively()
+        }
+    }
+
+    /** A successful download must reach the installer rather than only a shell wrapper. */
+    @Test fun hermesInstallerExecutesDownloadedScript() {
+        val tempHome = java.nio.file.Files.createTempDirectory("omalauncher-hermes-success").toFile()
+        try {
+            val fakeBin = File(tempHome, "bin").apply { mkdirs() }
+            val fakeCurl = File(fakeBin, "curl").apply {
+                writeText("#!/bin/sh\n[ \"\$3\" = \"-o\" ] || exit 33\nprintf 'printf installer-ran' > \"\$4\"\n")
+            }
+            assertTrue("cannot mark test curl executable", fakeCurl.setExecutable(true))
+
+            val process = ProcessBuilder("sh", "-c", AGENTS.single { it.bin == "hermes" }.install!!)
+                .redirectErrorStream(true)
+                .apply {
+                    environment()["HOME"] = tempHome.absolutePath
+                    environment()["PATH"] = fakeBin.absolutePath + File.pathSeparator + environment()["PATH"]
+                }
+                .start()
+            val output = process.inputStream.bufferedReader().use { it.readText() }
+            assertEquals(output, 0, process.waitFor())
+            assertEquals("installer-ran", output.trim())
+        } finally {
+            tempHome.deleteRecursively()
+        }
+    }
+
+    /** A widget prompt must not be evaluated by the guest shell as options or commands. */
+    @Test fun hermesPromptUsesChatQueryFlagWithOneLiteralArgument() {
+        val prompt = "--help; $(exit 99) 'quoted'"
+        val script = """
+            set -- ${agentInvocation("hermes", prompt)}
+            test "${'$'}#" -eq 4 &&
+            test "${'$'}1" = hermes &&
+            test "${'$'}2" = chat &&
+            test "${'$'}3" = -q &&
+            test "${'$'}4" = " ${'$'}EXPECTED_PROMPT"
+        """.trimIndent()
+        val process = ProcessBuilder("sh", "-c", script)
+            .redirectErrorStream(true)
+            .apply { environment()["EXPECTED_PROMPT"] = prompt }
+            .start()
+        val output = process.inputStream.bufferedReader().use { it.readText() }
+        assertEquals(output, 0, process.waitFor())
+    }
+
+
+    /** A failed download must not erase UV settings or appear as a successful empty install. */
+    @Test fun hermesInstallerDoesNotMaskDownloadFailures() {
+        val home = Files.createTempDirectory("omalauncher-hermes-fail-").toFile()
+        try {
+            val config = File(home, ".config/uv/uv.toml")
+            config.parentFile!!.mkdirs()
+            val original = "[cache]\ncache-dir = \"/chosen/location\"\n"
+            config.writeText(original)
+            val script = "curl() { return 22; }\n" + AGENTS.single { it.bin == "hermes" }.install!!
+            val process = ProcessBuilder("sh", "-c", script)
+                .redirectErrorStream(true)
+                .apply { environment()["HOME"] = home.absolutePath }
+                .start()
+            val output = process.inputStream.bufferedReader().use { it.readText() }
+            assertEquals("download failure was masked: $output", 22, process.waitFor())
+            assertEquals(original, config.readText())
+        } finally {
+            home.deleteRecursively()
+        }
+    }
+
+    /** A successful mocked download still executes the installer and prepares new UV settings. */
+    @Test fun hermesInstallerRunsDownloadedScript() {
+        val home = Files.createTempDirectory("omalauncher-hermes-ok-").toFile()
+        try {
+            val stub = """
+                curl() {
+                    [ "${'$'}1" = -fsSL ] || return 31
+                    [ "${'$'}3" = -o ] || return 32
+                    printf 'exit 0\n' > "${'$'}4"
+                }
+            """.trimIndent()
+            val script = stub + "\n" + AGENTS.single { it.bin == "hermes" }.install!!
+            val process = ProcessBuilder("sh", "-c", script)
+                .redirectErrorStream(true)
+                .apply { environment()["HOME"] = home.absolutePath }
+                .start()
+            val output = process.inputStream.bufferedReader().use { it.readText() }
+            assertEquals("mock installer failed: $output", 0, process.waitFor())
+            assertEquals("link-mode = \"copy\"\n", File(home, ".config/uv/uv.toml").readText())
+        } finally {
+            home.deleteRecursively()
+        }
+    }
+
     /** A missing alias would make opening that agent's window throw. */
     @Test fun everyAgentHasAWindowAlias() {
         val manifest = File("src/main/AndroidManifest.xml").readText()

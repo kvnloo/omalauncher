@@ -29,7 +29,7 @@ fun AgentsScreen(
     val scope = rememberCoroutineScope()
     OverlayPanel("coding agents", onDismiss, contentWidth = ReadingWidth) {
         BasicText(
-            "Installed with mise, like Omarchy. Logins open in your browser; paste keys with the keyboard's clipboard.",
+            "Most agents install with mise; Hermes uses its own installer. Logins open in your browser.",
             Modifier.padding(vertical = 8.dp),
             style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small),
         )
@@ -38,6 +38,7 @@ fun AgentsScreen(
                 AgentRow(
                     agent = agent,
                     installed = agent in store.installed,
+                    removable = store.isMiseInstalled(agent) && agent.install == null,
                     state = store.states[agent.bin] ?: JobState.Idle,
                     onInstall = { scope.launch { store.install(agent) } },
                     onRemove = { scope.launch { store.remove(agent) } },
@@ -52,6 +53,7 @@ fun AgentsScreen(
 private fun AgentRow(
     agent: Agent,
     installed: Boolean,
+    removable: Boolean,
     state: JobState,
     onInstall: () -> Unit,
     onRemove: () -> Unit,
@@ -69,7 +71,7 @@ private fun AgentRow(
                 state is JobState.Working -> BasicText("${state.action}…", style = Mono.copy(color = Palette.accent))
                 installed -> {
                     BracketAction("open", Palette.green, onOpen)
-                    BracketAction("remove", Palette.red, onRemove)
+                    if (removable) BracketAction("remove", Palette.red, onRemove)
                 }
                 else -> BracketAction("install", Palette.accent, onInstall)
             }
