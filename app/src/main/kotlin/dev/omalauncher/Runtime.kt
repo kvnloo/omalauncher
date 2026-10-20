@@ -497,8 +497,19 @@ class Runtime(
         // all share the app_id org.quickshell, so their window title, which is their name, decides.
         wm.appWindows
             .firstOrNull { (it.appId.isNotEmpty() && app.matches(it.appId)) || it.title.equals(app.name, ignoreCase = true) }
-            ?.let { if (bringToFront(it)) return }
+            ?.let { if (restoreWindow(it)) return }
         launch(app.exec)
+    }
+
+    /**
+     * Returns to an existing Wayland window without starting its command again.
+     * If Android lost its task, attach a new activity to the same live handle.
+     */
+    fun restoreWindow(window: XdgToplevel): Boolean {
+        if (window !in wm.appWindows) return false
+        val handle = wm.handleOf(window) ?: return false
+        if (!bringToFront(window)) wm.openAppWindow(handle)
+        return true
     }
 
     /** Moves [window]'s Android task to the front; false if it has none (yet). */
@@ -506,7 +517,7 @@ class Runtime(
         val handle = wm.handleOf(window) ?: return false
         val task =
             context.getSystemService(ActivityManager::class.java).appTasks.firstOrNull {
-                runCatching { it.taskInfo?.baseIntent?.data?.lastPathSegment }.getOrNull() == handle
+                runCatching { isWindowTaskUri(it.taskInfo?.baseIntent?.data?.toString(), handle) }.getOrDefault(false)
             } ?: return false
         // The task may have gone since it was listed.
         return runCatching { task.moveToFront() }.isSuccess
