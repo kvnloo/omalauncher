@@ -43,6 +43,17 @@ The following original carriers are indexed, not closed or taken over. Their lin
 | [5: Tern finger-scroll CI](https://github.com/kvnloo/omalauncher/pull/5) | `fix/tern-touch-keyboard` at `6dcd85392a8c50bf82e3257ecb4455c3883e9270` | Existing [origin 128](https://github.com/SimonSchubert/omalauncher/pull/128), [legacy QA 114](https://github.com/kvnloo/oss-factory/issues/114): preserve installed updated-APK/native routing proof boundary. |
 | [6: OpenCode install candidate](https://github.com/kvnloo/omalauncher/pull/6) | `fix/opencode-v2-install` at `a47f92bd98766bfbd92b36c86b83025e40d82287` | Existing [origin issue 145](https://github.com/SimonSchubert/omalauncher/issues/145), [legacy QA 183](https://github.com/kvnloo/oss-factory/issues/183): fork-only evidence and original authorization limits remain; no publication or runtime change here. |
 
+
+## October 20, 2026 — new work and origin-promotion gate
+
+This section records a new user-directed development wave. It does **not** retroactively broaden the bounded October 18 coordinator lease.
+
+- **Drawer browsing without forced keyboard** ([upstream issue #178](https://github.com/SimonSchubert/omalauncher/issues/178)): new fork branch [`fix/drawer-keyboard-focus-178`](https://github.com/kvnloo/omalauncher/tree/fix/drawer-keyboard-focus-178), at `aa79d7b11368ae2b2a75e36b440ac1cefcd2728b`, based exactly on upstream `53505248b9f8616fe308c4972cbbf2f6693a6946`. Two files changed: `Gestures.kt` saves an opt-in/out "drawer keyboard" choice (default remains "on open"), and `PromptBar.kt` only auto-focuses on drawer open when allowed; an explicit bar tap still focuses. **Status: HOLD for hosted CI, Android acceptance, and upstream publication.** A scoped upstream create-PR attempt on October 20 returned HTTP 403 `Resource not accessible by integration`; no origin PR exists from this attempt. Do not claim CI passed or phone tested. Next: use an authorized `gh` session to create the PR against `SimonSchubert/omalauncher:main`, then obtain exact-head CI and on-device swipe/tap verification.
+- **Existing origin PR #158** ([live-window recovery](https://github.com/SimonSchubert/omalauncher/pull/158), fork `fix/live-window-recovery` @ `802f243bc59be4e9429710ac66b6e22b65d1801f`): open; recorded origin body and comment state four S25 Ultra instrumentation scenarios passed with isolated test installs. The current origin PR metadata reports `mergeable=false`. Next: identify and resolve the actual mainline conflict and re-run checks; do not treat prior device evidence as validation of any conflict resolution.
+- **Existing origin PR #85** ([Hermes agent and user-provided commands](https://github.com/SimonSchubert/omalauncher/pull/85), by DeseretSaint): open, independently includes Hermes install/prompt routing, alias/icon and a custom command path. Fork branch `feat/hermes-installer-setup` exists, but overlapping work must be deduplicated or reduced to a distinct, reviewable delta rather than submitted as a competing Hermes PR.
+
+No new issue or duplicate promotion queue was created. The existing owner-local coordination PR #7 remains the only canonical queue carrier.
+
 ## Landed
 
 ### Copilot interactive prompt — source acceptance verified
