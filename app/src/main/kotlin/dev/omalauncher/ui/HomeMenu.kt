@@ -1,12 +1,15 @@
 package dev.omalauncher.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -100,6 +103,26 @@ fun HomeMenu(
         MenuItem("browse store") {
             state.homeMenuOpen = false
             state.show(SettingsPage.Store)
+        }
+        // Live Wayland windows are not always discoverable in Android Recents.
+        // appWindows excludes embedded terminal tiles and clears on process restart.
+        if (runtime.wm.appWindows.isNotEmpty()) {
+            Column(Modifier.heightIn(max = 260.dp).verticalScroll(rememberScrollState())) {
+                BasicText(
+                    "running Linux windows (${runtime.wm.appWindows.size})",
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small),
+                )
+                for ((index, window) in runtime.wm.appWindows.withIndex()) {
+                    val name = runtime.displayName(window.appId, window.title)
+                    val detail = window.title.takeIf { it.isNotBlank() && it != name }
+                    val label = "${index + 1}. $name" + (detail?.let { " · $it" } ?: "")
+                    MenuItem(label) {
+                        state.homeMenuOpen = false
+                        runtime.restoreWindow(window)
+                    }
+                }
+            }
         }
         Box(Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
             ThemeStrip(
