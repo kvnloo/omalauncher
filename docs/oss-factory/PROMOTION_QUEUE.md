@@ -22,6 +22,15 @@ Direct operator scope: reconcile already-accepted Copilot work, retain its origi
 
 None verified ready by this coordination-only audit.
 
+## New work — 2026-10-20
+
+| Source / carrier | Exact head / status | Next gate |
+| --- | --- | --- |
+| [Hermes agent setup QA PR 8](https://github.com/kvnloo/omalauncher/pull/8); original [DeseretSaint origin PR 85](https://github.com/SimonSchubert/omalauncher/pull/85) | `feat/hermes-installer-setup` at `45ad1c5c71be7fe1adb3b1476b6e0ced2ecc4626`. Existing contributor's Hermes implementation plus fork-only first-run/setup checks. **Draft / CI and signed phone install unverified**. | Await own hosted CI, review proot installer fork/provenance and actual handset login/install; no duplicate origin PR. |
+| [Drawer keyboard QA PR 9](https://github.com/kvnloo/omalauncher/pull/9); origin [issue 178](https://github.com/SimonSchubert/omalauncher/issues/178) by haxx0071 | `fix/optional-drawer-keyboard-178` at `ec8f90a2d790a9e6211c2c69f07dce17fb919001`, based on upstream main `53505248b9f8616fe308c4972cbbf2f6693a6946`. Four files: default-on flag, style UI, focus behavior, TOML regression test. **Draft / hosted CI started, not yet verified**. | Check exact-head `./gradlew :owl:test :app:testDebugUnitTest :owl:owlJar`, then seek upstream review without duplicate; physical IME acceptance still pending. |
+
+Keep both QA carriers separate from this **one canonical coordination queue**. Neither carrier approves an origin merge, claims physical installation, or replaces the original contributor's credit.
+
 ## Existing upstream review / needs proof / held
 
 The following original carriers are indexed, not closed or taken over. Their linked records retain authorship, evidence, comments and historical limitations. Their current origin outcomes are not claimed by this narrow audit.
