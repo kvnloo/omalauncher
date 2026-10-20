@@ -61,6 +61,15 @@ This section records a new user-directed development wave. It does **not** retro
 
 No new issue or duplicate promotion queue was created. The existing owner-local coordination PR #7 remains the only canonical queue carrier.
 
+## Work added October 20, 2026 (fork QA, not upstream admission)
+
+| Carrier | Source | Status / next gate |
+| --- | --- | --- |
+| [8: Hermes setup](https://github.com/kvnloo/omalauncher/pull/8) | `feat/hermes-installer-setup` built from [DeseretSaint's upstream PR 85](https://github.com/SimonSchubert/omalauncher/pull/85) | Draft fork QA; installer failure-status regression added during this wave. Preserve DeseretSaint's authorship and update existing origin PR rather than creating a competing one. Check latest-head hosted CI, then physical proot/authenticated-agent install; no installed APK claimed. |
+| [10: drawer opacity](https://github.com/kvnloo/omalauncher/pull/10) | `feat/drawer-opacity-171` from origin `5350524`; [issue 171](https://github.com/SimonSchubert/omalauncher/issues/171) | Draft fork QA; adds `drawer.opacity` (0..1, default 0.97), style TOML tests and docs. Latest-head CI and actual Android drawer appearance still to check; no origin PR/comment or main merge yet. |
+
+Both carriers stay separate from the original coordinator's historical October 18 reconciliation lease. Fork CI success alone does not authorize upstream publication.
+
 ## Landed
 
 ### Copilot interactive prompt — source acceptance verified
