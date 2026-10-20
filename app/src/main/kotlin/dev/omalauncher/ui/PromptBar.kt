@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.PopupPositionProvider
 import dev.omalauncher.Runtime
+import dev.omalauncher.theme.Style
 import dev.omalauncher.linux.LinuxState
 import dev.omalauncher.linux.agentInvocation
 import kotlinx.coroutines.flow.collectLatest
@@ -83,6 +84,24 @@ import androidx.compose.foundation.gestures.detectTapGestures
  * Listen dictates into it (the landscape rail's mic).
  */
 enum class PromptRequest { Type, Send, Listen, Release }
+
+/**
+ * Only automatic drawer opening follows the keyboard preference. A deliberate tap or Type request
+ * still focuses the bar; closing always lets go, regardless of how the drawer was opened.
+ */
+internal enum class DrawerFocusAction { Focus, Release, None }
+
+internal fun drawerFocusAction(
+    shown: Boolean,
+    autoKeyboard: Boolean,
+    listening: Boolean,
+    focused: Boolean,
+): DrawerFocusAction =
+    when {
+        shown && autoKeyboard && !listening -> DrawerFocusAction.Focus
+        !shown && focused -> DrawerFocusAction.Release
+        else -> DrawerFocusAction.None
+    }
 
 /** Height of the collapsed bar; the home grid leaves this much room for it. */
 val PromptBarHeight = 48.dp
@@ -110,6 +129,7 @@ internal fun PromptBar(
     val text = state.query
     var focused by remember { mutableStateOf(false) }
     val panelShown by remember(state) { derivedStateOf { state.drawer.value > 0.01f } }
+    val drawerKeyboard = runtime.style.style[Style.DRAWER_KEYBOARD]
     val agent = runtime.agents.default
     val linuxState by runtime.bootstrap.state.collectAsState()
     // Agents run in Linux: without it, the bar offers to install it instead.
@@ -204,14 +224,17 @@ internal fun PromptBar(
         state.promptRequest = null
     }
     // The panel and the bar open and close together: opening it (Super+Space, a widget) focuses the bar, closing it lets go.
-    LaunchedEffect(panelShown) {
-        // Opened to dictate, the keyboard stays down.
-        if (panelShown && !speech.listening) {
-            focus.requestFocus()
-            keyboard?.show()
-        } else if (!panelShown && focused) {
-            focusManager.clearFocus()
-            keyboard?.hide()
+    LaunchedEffect(panelShown, drawerKeyboard) {
+        when (drawerFocusAction(panelShown, drawerKeyboard, speech.listening, focused)) {
+            DrawerFocusAction.Focus -> {
+                focus.requestFocus()
+                keyboard?.show()
+            }
+            DrawerFocusAction.Release -> {
+                focusManager.clearFocus()
+                keyboard?.hide()
+            }
+            DrawerFocusAction.None -> Unit
         }
     }
     BackHandler(enabled = speech.listening) { speech.cancel() }
