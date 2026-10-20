@@ -18,6 +18,13 @@ Direct operator scope: reconcile already-accepted Copilot work, retain its origi
 - Owner: codex, bounded accepted-work reconciliation for `SimonSchubert/omalauncher#129`.
 - Lease: **released** after accepted-work reconciliation on 2026-10-18. Other contribution claims were not acquired.
 
+## Active Hermes integration (2026-10-20)
+
+- Fork QA [PR #8](https://github.com/kvnloo/omalauncher/pull/8), branch `feat/hermes-installer-setup`. Distinct from [original upstream PR #85](https://github.com/SimonSchubert/omalauncher/pull/85) by **DeseretSaint**; integration retains the original branch as a merge parent, and must not become a competing upstream PR.
+- First exact head `45ad1c5c71be7fe1adb3b1476b6e0ced2ecc4626` passed [GitHub Actions CI](https://github.com/kvnloo/omalauncher/actions/runs/39376700131) (app and OWL tests, build, lint).
+- Follow-up `b9c36ca82af63f8816105b625b0126f4dbbbdc20` prevents a failed curl from looking like a successful Hermes install and leaves existing `uv.toml` unchanged. Two shell subprocess regressions added; [exact-head CI](https://github.com/kvnloo/omalauncher/actions/runs/39437809691) needs to pass before reclassification.
+- **HOLD / native gate:** fork's third-party proot compatibility dependency must be reviewed, and a real Arch/proot install, CLI prompt and Android APK still need verification. Existing uv config may require explicit copy link mode for standalone guest use. No upstream promotion or actual device validation claimed.
+
 ## Ready
 
 None verified ready by this coordination-only audit.
