@@ -16,6 +16,34 @@ class AgentsTest {
         assertTrue(agent.install!!.contains("--skip-browser"))
     }
 
+    /** A failed fetch must fail installation, even if the installer shell gets empty stdin. */
+    @Test fun hermesInstallerPropagatesCurlFailure() {
+        val tempHome = java.nio.file.Files.createTempDirectory("omalauncher-hermes-test").toFile()
+        try {
+            val fakeBin = File(tempHome, "bin").apply { mkdirs() }
+            val fakeCurl = File(fakeBin, "curl").apply {
+                writeText("#!/bin/sh\nexit 22\n")
+            }
+            assertTrue("cannot mark test curl executable", fakeCurl.setExecutable(true))
+
+            val process = ProcessBuilder("sh", "-c", AGENTS.single { it.bin == "hermes" }.install!!)
+                .redirectErrorStream(true)
+                .apply {
+                    environment()["HOME"] = tempHome.absolutePath
+                    environment()["PATH"] = fakeBin.absolutePath + File.pathSeparator + environment()["PATH"]
+                }
+                .start()
+            val output = process.inputStream.bufferedReader().use { it.readText() }
+            assertTrue("failed curl incorrectly reported a successful install: $output", process.waitFor() != 0)
+            assertEquals(
+                "link-mode = \"copy\"\n",
+                File(tempHome, ".config/uv/uv.toml").readText(),
+            )
+        } finally {
+            tempHome.deleteRecursively()
+        }
+    }
+
     /** A widget prompt must not be evaluated by the guest shell as options or commands. */
     @Test fun hermesPromptUsesChatQueryFlagWithOneLiteralArgument() {
         val prompt = "--help; $(exit 99) 'quoted'"
