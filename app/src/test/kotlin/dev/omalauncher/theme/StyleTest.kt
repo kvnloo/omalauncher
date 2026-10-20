@@ -130,7 +130,7 @@ class StyleTest {
         assertTrue(defaults.contains("opacity = 0.97"))
 
         for (opacity in listOf(0.0, 0.45, 1.0)) {
-            val parsed = Toml.parse("[drawer]\\nopacity = $opacity\\n")
+            val parsed = Toml.parse("[drawer]\nopacity = $opacity\n")
             val decoded = StyleFile.decode(parsed)
             assertEquals(emptyList<String>(), decoded.problems)
             assertEquals(opacity, decoded.style[Style.DRAWER_OPACITY], 0.0)
