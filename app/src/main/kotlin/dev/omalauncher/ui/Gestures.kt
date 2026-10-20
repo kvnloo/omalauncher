@@ -47,6 +47,17 @@ class Gestures(
     context: Context,
     private val style: StyleStore,
 ) {
+    private val prefs = LauncherData.prefs(context)
+    private val drawerSearchFocus = mutableStateOf(prefs.getBoolean(DRAWER_SEARCH_FOCUS, true))
+
+    /** Whether opening the drawer also opens the keyboard; tapping the bar always focuses it. */
+    var focusSearchOnDrawerOpen: Boolean
+        get() = drawerSearchFocus.value
+        set(value) {
+            drawerSearchFocus.value = value
+            prefs.edit().putBoolean(DRAWER_SEARCH_FOCUS, value).apply()
+        }
+
     /** drawer.owl by default: the app drawer, like stock launchers, written in owl. Saved as it's set. */
     var swipeUp: String
         get() = LauncherStyle.style[Style.SWIPE_UP]
@@ -59,7 +70,6 @@ class Gestures(
 
     init {
         // Launchers before style.toml kept swipe up in preferences; moved over once, and left there for a downgrade.
-        val prefs = LauncherData.prefs(context)
         if (!prefs.getBoolean(MOVED, false)) {
             if (prefs.getString(OLD_SWIPE_UP, null) == NONE) swipeUp = NONE
             prefs.edit().putBoolean(MOVED, true).apply()
@@ -68,6 +78,7 @@ class Gestures(
 
     companion object {
         const val NONE = "none"
+        private const val DRAWER_SEARCH_FOCUS = "gesture_drawer_search_focus"
         private const val OLD_SWIPE_UP = "gesture_swipe_up"
         private const val MOVED = "gestures_in_style"
     }
@@ -243,9 +254,16 @@ fun GesturesScreen(
         Spacer(Modifier.height(8.dp))
         GestureRow("swipe down", listOf(Gestures.NONE to "nothing") + panels, gestures.swipeDown) { gestures.swipeDown = it }
         EditPanel(runtime, gestures.swipeDown, onAgent)
+        Spacer(Modifier.height(8.dp))
+        GestureRow(
+            "drawer keyboard",
+            listOf("auto" to "on open", "tap" to "on tap"),
+            if (gestures.focusSearchOnDrawerOpen) "auto" else "tap",
+        ) { gestures.focusSearchOnDrawerOpen = it == "auto" }
         BasicText(
             "panels are owl files, the drawer among them: edit them like widgets, or create one with your agent from home's menu. " +
-                "with nothing on swipe up, tapping the bar still opens the drawer",
+                "with nothing on swipe up, tapping the bar still opens the drawer. " +
+                "the keyboard can wait until you tap the bar, even when the drawer opens from a swipe",
             Modifier.padding(top = 12.dp, start = 14.dp, end = 14.dp),
             style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small),
         )
