@@ -44,6 +44,31 @@ class AgentsTest {
         }
     }
 
+    /** A successful download must reach the installer rather than only a shell wrapper. */
+    @Test fun hermesInstallerExecutesDownloadedScript() {
+        val tempHome = java.nio.file.Files.createTempDirectory("omalauncher-hermes-success").toFile()
+        try {
+            val fakeBin = File(tempHome, "bin").apply { mkdirs() }
+            val fakeCurl = File(fakeBin, "curl").apply {
+                writeText("#!/bin/sh\nprintf '%s\\n' 'printf installer-ran'\n")
+            }
+            assertTrue("cannot mark test curl executable", fakeCurl.setExecutable(true))
+
+            val process = ProcessBuilder("sh", "-c", AGENTS.single { it.bin == "hermes" }.install!!)
+                .redirectErrorStream(true)
+                .apply {
+                    environment()["HOME"] = tempHome.absolutePath
+                    environment()["PATH"] = fakeBin.absolutePath + File.pathSeparator + environment()["PATH"]
+                }
+                .start()
+            val output = process.inputStream.bufferedReader().use { it.readText() }
+            assertEquals(output, 0, process.waitFor())
+            assertEquals("installer-ran", output.trim())
+        } finally {
+            tempHome.deleteRecursively()
+        }
+    }
+
     /** A widget prompt must not be evaluated by the guest shell as options or commands. */
     @Test fun hermesPromptUsesChatQueryFlagWithOneLiteralArgument() {
         val prompt = "--help; $(exit 99) 'quoted'"
