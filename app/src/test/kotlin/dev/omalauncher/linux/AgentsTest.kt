@@ -51,7 +51,7 @@ class AgentsTest {
         try {
             val fakeBin = File(tempHome, "bin").apply { mkdirs() }
             val fakeCurl = File(fakeBin, "curl").apply {
-                writeText("#!/bin/sh\nprintf '%s\\n' 'printf installer-ran'\n")
+                writeText("#!/bin/sh\n[ \"\$3\" = \"-o\" ] || exit 33\nprintf 'printf installer-ran' > \"\$4\"\n")
             }
             assertTrue("cannot mark test curl executable", fakeCurl.setExecutable(true))
 
