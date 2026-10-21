@@ -7,6 +7,7 @@ import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
+import dev.omalauncher.linux.GuestSession
 import dev.omalauncher.linux.LinuxState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +17,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.io.File
 
 /**
  * Keeps the process (and with it proot and the Wayland server) in the
@@ -36,16 +38,31 @@ class LinuxService : Service() {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel(CHANNEL, "Linux session", NotificationManager.IMPORTANCE_LOW))
         val state = (application as App).runtime.bootstrap.state
-        startForeground(1, notification(state.value), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        val foreground =
+            runCatching {
+                startForeground(1, notification(state.value), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            }
+        if (foreground.isFailure) {
+            // A sticky restart from the background that Android 12+ didn't allow in the foreground.
+            stopSelf()
+            return START_NOT_STICKY
+        }
         if (watch == null) {
             watch =
                 scope.launch {
                     state.map(::text).distinctUntilChanged().collect { nm.notify(1, build(it)) }
                 }
         }
-        // Not restarted after the process dies: Linux only comes back with the launcher (Runtime.start),
-        // and Android 12+ may refuse startForeground() in a restart from the background.
-        return START_NOT_STICKY
+        // With ~/.config/omalauncher/keep-running, Android restarts this service after it kills the
+        // process (low memory, a swipe from Recents), and the restart brings Linux back without the
+        // launcher being opened: the guest's session (GuestSession) then restarts its services.
+        // Android 12+ lets a restart start in the foreground when the app is exempt from battery
+        // optimization; if it refuses, the restart gives up quietly as before.
+        // Without the file Linux only comes back with the launcher (Runtime.start).
+        val runtime = (application as App).runtime
+        if (!File(runtime.proot.launcherConfig, GuestSession.KEEP_RUNNING).exists()) return START_NOT_STICKY
+        runtime.start()
+        return START_STICKY
     }
 
     override fun onDestroy() {

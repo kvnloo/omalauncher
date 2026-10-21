@@ -19,6 +19,7 @@ import dev.omalauncher.linux.AGENTS
 import dev.omalauncher.linux.Agent
 import dev.omalauncher.linux.AgentStore
 import dev.omalauncher.linux.AudioBridge
+import dev.omalauncher.linux.GuestSession
 import dev.omalauncher.linux.Bootstrap
 import dev.omalauncher.linux.EDIT_COMMAND
 import dev.omalauncher.linux.FILES_COMMAND
@@ -87,6 +88,9 @@ class Runtime(
     val usage = AppUsage(context)
     val themes = ThemeStore(context, proot, style, isLinux = { linux }, onConfigChanged = ::syncGuest)
     private val audio = AudioBridge(proot)
+
+    /** The user's `~/.config/omalauncher/session`, if any: guest services that outlive every window. */
+    private val session = GuestSession(proot)
     private val openBridge = OpenBridge(context, proot, onOpenFiles = ::openFiles, onEdit = ::edit)
     val agents = AgentStore(proot, onChanged = ::syncGuest)
     val pacman = Pacman(context, proot)
@@ -243,6 +247,7 @@ class Runtime(
                 launcherFont.forget()
                 widgets.linuxChanged(false)
                 audio.stop()
+                session.stop()
                 withContext(Dispatchers.IO) { proot.killAll() }
                 bootstrap.remove()
                 withContext(Dispatchers.IO) {
@@ -303,6 +308,7 @@ class Runtime(
         withContext(Dispatchers.IO) {
             provisioner.sync()
             audio.start()
+            session.start()
             synchronized(server) { server.input.setKeymap(proot.keymap.path) }
             agents.load()
         }
