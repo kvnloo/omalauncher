@@ -266,7 +266,7 @@ private fun decodeThumbnail(
     height: Int,
     top: Float?,
 ): Bitmap? {
-    val decoder = BitmapRegionDecoder.newInstance(bytes, 0, bytes.size)
+    val decoder = BitmapRegionDecoder.newInstance(bytes, 0, bytes.size, false)
     try {
         val w = decoder.width
         val h = top?.let { minOf(decoder.height, (w * it).toInt().coerceAtLeast(1)) } ?: decoder.height
