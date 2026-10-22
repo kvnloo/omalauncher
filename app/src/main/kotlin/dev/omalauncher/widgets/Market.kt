@@ -266,7 +266,9 @@ private fun decodeThumbnail(
     height: Int,
     top: Float?,
 ): Bitmap? {
-    val decoder = BitmapRegionDecoder.newInstance(bytes, 0, bytes.size)
+    // The four-argument overload supports minSdk 29; isShareable has no effect.
+    @Suppress("DEPRECATION")
+    val decoder = BitmapRegionDecoder.newInstance(bytes, 0, bytes.size, false)
     try {
         val w = decoder.width
         val h = top?.let { minOf(decoder.height, (w * it).toInt().coerceAtLeast(1)) } ?: decoder.height
