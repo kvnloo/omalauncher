@@ -39,6 +39,8 @@ data class SurfaceHit(
 class WindowRenderer(
     private val server: WaylandServer,
     private val window: XdgToplevel,
+    /** Keeps the window's alpha, for a view that isn't opaque to show what's behind it; else it's filled with [background]. */
+    private val translucent: Boolean = false,
 ) {
     private val thread = HandlerThread("wl-render").apply { start() }
     private val handler = Handler(thread.looper)
@@ -85,7 +87,7 @@ class WindowRenderer(
     ) {
         lock.withLock {
             if (native != 0L) Native.windowRelease(native)
-            native = Native.windowCreate(surface, w, h)
+            native = Native.windowCreate(surface, w, h, translucent)
             width = w
             height = h
             redrawAll = true
@@ -233,7 +235,10 @@ class WindowRenderer(
         val layers = scene
         for (l in layers.asReversed()) {
             if (l.store == null || l.surface.destroyed || x < l.x || y < l.y || x >= l.x + l.width || y >= l.y + l.height) continue
-            return SurfaceHit(l.surface, (x - l.x) / l.scale, (y - l.y) / l.scale, l.inPopup)
+            val lx = (x - l.x) / l.scale
+            val ly = (y - l.y) / l.scale
+            if (!l.surface.takesInput(lx, ly)) continue
+            return SurfaceHit(l.surface, lx, ly, l.inPopup)
         }
         val base = layers.firstOrNull { it.surface === window.surface } ?: return null
         return SurfaceHit(base.surface, (x - base.x) / base.scale, (y - base.y) / base.scale)
