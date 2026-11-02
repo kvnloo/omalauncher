@@ -103,11 +103,26 @@ object LauncherStyle {
     /** The strip of recently used apps above the bar on home. */
     var recentApps by mutableStateOf(true)
 
+    /** The position marker above the recent apps strip on home. */
+    var pageDots by mutableStateOf(PageDots.Swiping)
+
     /** How frames (tiles, panels, menus, fields) round their corners. */
     var corners by mutableStateOf(Corners.Edge)
 
     /** The shape frames use: square, or [radius] scaled by the corner style. */
     fun shape(radius: Dp = 16.dp): Shape = if (corners == Corners.Edge) RectangleShape else RoundedCornerShape(radius * corners.scale)
+}
+
+/** When the home page indicator is visible; stable identifiers in saved launcher preferences. */
+enum class PageDots(val id: String) {
+    Swiping("swiping"),
+    Always("always"),
+    Off("off"),
+    ;
+
+    companion object {
+        fun of(id: String?) = entries.firstOrNull { it.id.equals(id, ignoreCase = true) } ?: Swiping
+    }
 }
 
 /** Corner styles, from Omarchy's sharp edges to stock Android's round shapes; [scale] multiplies each frame's radius. */
