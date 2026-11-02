@@ -184,6 +184,9 @@ fun HomeScreen(
     val side = homeSide()
     val turned = homeTurned()
     val sideRoom = sideWidth()
+    val recentRoom = if (LauncherStyle.recentApps && side == null) RecentStripHeight else 0.dp
+    val hasPageDots = pageDotsAllowed(LauncherStyle.pageDots, turned, pager.pageCount)
+    val dotsRoom = if (hasPageDots) PageDotsHeight else 0.dp
     val barRoom = with(density) { state.barHeight.takeIf { it > 0 }?.toDp() ?: (PromptBarHeight + 12.dp) }
     LaunchedEffect(extraKeys) { if (!extraKeys) terminals.extraKeys = null }
     Box(
@@ -242,101 +245,110 @@ fun HomeScreen(
                 bottom = if (side != null) 0.dp else barRoom,
             ),
     ) {
-        HomeGrid(
-            pager = pager,
-            pages = pageNumbers,
-            itemsOn = engine::itemsOn,
-            layout = engine.layout,
-            arrange = arrange,
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            selected = state.editing,
-            onSelect = { state.editing = it },
-            actions = { item ->
-                EditBar {
-                    if (item is WidgetItem) EditAction("edit") { edit(item) }
-                    // As a QR code or link, or (your own) to the store. An agent's tile is a terminal, not a widget to pass on.
-                    if (item is WidgetItem && !item.spec.file.name.startsWith("agent-")) {
-                        EditAction("share") {
-                            state.editing = null
-                            state.sharing = item.spec
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            HomeGrid(
+                pager = pager,
+                pages = pageNumbers,
+                itemsOn = engine::itemsOn,
+                layout = engine.layout,
+                arrange = arrange,
+                modifier = Modifier.fillMaxSize(),
+                selected = state.editing,
+                onSelect = { state.editing = it },
+                actions = { item ->
+                    EditBar {
+                        if (item is WidgetItem) EditAction("edit") { edit(item) }
+                        // As a QR code or link, or (your own) to the store. An agent's tile is a terminal, not a widget to pass on.
+                        if (item is WidgetItem && !item.spec.file.name.startsWith("agent-")) {
+                            EditAction("share") {
+                                state.editing = null
+                                state.sharing = item.spec
+                            }
                         }
+                        EditAction("remove", Palette.red) { remove(item) }
                     }
-                    EditAction("remove", Palette.red) { remove(item) }
-                }
-            },
-            render = { item, tile, highlighted ->
-                when (item) {
-                    is WidgetItem -> {
-                        // Whose terminal has the keyboard: the tile gives up what the keyboard covers once the lift is spent.
-                        val typing = engine.instance(item.spec)?.owns(terminals.active) == true
-                        WidgetTile(
-                            spec = item.spec,
-                            instance = engine.instance(item.spec),
-                            // As shown: on its side in landscape.
-                            cells = engine.layout.cell(item.key)?.let { if (turned) it.h to it.w else it.w to it.h },
-                            // Accent like Hyprland's active border: only while one of its terminals has the keyboard.
-                            focused = highlighted || typing,
-                            modifier =
-                                if (typing) {
-                                    tile
-                                        .onGloballyPositioned { terminals.tile = it.boundsInWindow().translate(0f, terminals.lift) }
-                                        .padding(bottom = with(density) { terminals.cut.toDp() })
-                                } else {
-                                    tile
+                },
+                render = { item, tile, highlighted ->
+                    when (item) {
+                        is WidgetItem -> {
+                            // Whose terminal has the keyboard: the tile gives up what the keyboard covers once the lift is spent.
+                            val typing = engine.instance(item.spec)?.owns(terminals.active) == true
+                            WidgetTile(
+                                spec = item.spec,
+                                instance = engine.instance(item.spec),
+                                // As shown: on its side in landscape.
+                                cells = engine.layout.cell(item.key)?.let { if (turned) it.h to it.w else it.w to it.h },
+                                // Accent like Hyprland's active border: only while one of its terminals has the keyboard.
+                                focused = highlighted || typing,
+                                modifier =
+                                    if (typing) {
+                                        tile
+                                            .onGloballyPositioned { terminals.tile = it.boundsInWindow().translate(0f, terminals.lift) }
+                                            .padding(bottom = with(density) { terminals.cut.toDp() })
+                                    } else {
+                                        tile
+                                    },
+                                onTap = { engine.tap(item.spec) },
+                                needs = engine.missing[item.spec.file.name].orEmpty(),
+                                install = engine.installs[item.spec.file.name],
+                                onInstall = { engine.installDependencies(item.spec) },
+                                waitsForLinux = if (engine.waitsForLinux(item.spec)) linuxState else null,
+                                onInstallLinux = { state.linuxOpen = true },
+                                onFix = { log ->
+                                    val agent = runtime.agents.default
+                                    if (agent == null) {
+                                        state.agentsOpen = true
+                                    } else {
+                                        runtime.terminal(fixDependenciesCommand(agent.bin, item.spec, log), "Fix ${item.spec.name}", agent)
+                                    }
                                 },
-                            onTap = { engine.tap(item.spec) },
-                            needs = engine.missing[item.spec.file.name].orEmpty(),
-                            install = engine.installs[item.spec.file.name],
-                            onInstall = { engine.installDependencies(item.spec) },
-                            waitsForLinux = if (engine.waitsForLinux(item.spec)) linuxState else null,
-                            onInstallLinux = { state.linuxOpen = true },
-                            onFix = { log ->
-                                val agent = runtime.agents.default
-                                if (agent == null) {
-                                    state.agentsOpen = true
-                                } else {
-                                    runtime.terminal(fixDependenciesCommand(agent.bin, item.spec, log), "Fix ${item.spec.name}", agent)
-                                }
-                            },
-                        )
+                            )
+                        }
+                        is Shortcut ->
+                            ShortcutTile(
+                                shortcut = item,
+                                icon = runtime.shortcutIcon(item, LauncherStyle.monochromeIcons),
+                                focused = highlighted,
+                                modifier = tile,
+                                onTap = {
+                                    // Opening an app from a folder closes the folder, like Android.
+                                    arrange.folder = null
+                                    runtime.open(item)
+                                },
+                                paused = runtime.androidApps.paused(item.profile),
+                            )
+                        is Folder ->
+                            FolderTile(
+                                folder = item,
+                                icons = item.apps.take(4).map { runtime.shortcutIcon(it, LauncherStyle.monochromeIcons) },
+                                focused = highlighted,
+                                modifier = tile,
+                                onTap = { arrange.folder = item.key },
+                            )
                     }
-                    is Shortcut ->
-                        ShortcutTile(
-                            shortcut = item,
-                            icon = runtime.shortcutIcon(item, LauncherStyle.monochromeIcons),
-                            focused = highlighted,
-                            modifier = tile,
-                            onTap = {
-                                // Opening an app from a folder closes the folder, like Android.
-                                arrange.folder = null
-                                runtime.open(item)
-                            },
-                            paused = runtime.androidApps.paused(item.profile),
-                        )
-                    is Folder ->
-                        FolderTile(
-                            folder = item,
-                            icons = item.apps.take(4).map { runtime.shortcutIcon(it, LauncherStyle.monochromeIcons) },
-                            focused = highlighted,
-                            modifier = tile,
-                            onTap = { arrange.folder = item.key },
-                        )
-                }
-            },
-            // The recent apps strip's room: kept while it's empty, so tiles don't reflow when it fills, and still
-            // home's to swipe and long-press there until it does.
-            room = if (LauncherStyle.recentApps && side == null) RecentStripHeight else 0.dp,
-            turned = turned,
-            per = per,
-            onLongPressEmpty = { openMenu(null) },
-            onNoRoom = { item -> showPage = engine.moveToFreePage(item) },
-            onMove = { item, page ->
-                engine.moveToPage(item, page)
-                showPage = page
-            },
-            onGroup = { app, target -> engine.shortcuts.group(app, target) },
-            onReorder = { app, before -> engine.shortcuts.moveBefore(app.key, before) },
-        )
+                },
+                // The recent apps strip's room: kept while it's empty, so tiles don't reflow when it fills, and still
+                // home's to swipe and long-press there until it does.
+                room = recentRoom + dotsRoom,
+                turned = turned,
+                per = per,
+                onLongPressEmpty = { openMenu(null) },
+                onNoRoom = { item -> showPage = engine.moveToFreePage(item) },
+                onMove = { item, page ->
+                    engine.moveToPage(item, page)
+                    showPage = page
+                },
+                onGroup = { app, target -> engine.shortcuts.group(app, target) },
+                onReorder = { app, before -> engine.shortcuts.moveBefore(app.key, before) },
+            )
+            if (hasPageDots) {
+                HomePageDots(
+                    pager = pager,
+                    mode = LauncherStyle.pageDots,
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = recentRoom),
+                )
+            }
+        }
     }
 
     if (extraKeys) {
