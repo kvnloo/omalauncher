@@ -501,15 +501,21 @@ class Runtime(
         launch(app.exec)
     }
 
-    /** Moves [window]'s Android task to the front; false if it has none (yet). */
+    /** Foreground the live window, reattaching it if Android discarded its task. */
     private fun bringToFront(window: XdgToplevel): Boolean {
+        if (window !in wm.appWindows) return false
         val handle = wm.handleOf(window) ?: return false
         val task =
             context.getSystemService(ActivityManager::class.java).appTasks.firstOrNull {
-                runCatching { it.taskInfo?.baseIntent?.data?.lastPathSegment }.getOrNull() == handle
-            } ?: return false
-        // The task may have gone since it was listed.
-        return runCatching { task.moveToFront() }.isSuccess
+                val data = runCatching { it.taskInfo?.baseIntent?.data }.getOrNull()
+                data?.scheme == "omarchy" && data.host == "window" && data.path == "/$handle"
+            }
+        if (task != null && runCatching { task.moveToFront() }.isSuccess) return true
+        // A missing/stale Android task is NOT a missing Linux app. Starting its
+        // Exec here would clone Tern while its original programs are still alive.
+        if (window !in wm.appWindows || wm.windowByHandle(handle) !== window) return false
+        wm.openAppWindow(handle)
+        return true
     }
 
     /** The name to show for a Linux window: launch name, then .desktop entry, then its title. */
