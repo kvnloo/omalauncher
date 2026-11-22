@@ -26,6 +26,7 @@ import dev.omalauncher.linux.LinuxApp
 import dev.omalauncher.linux.OpenBridge
 import dev.omalauncher.linux.Pacman
 import dev.omalauncher.linux.Proot
+import dev.omalauncher.linux.MicrophoneBridge
 import dev.omalauncher.linux.LinuxState
 import dev.omalauncher.linux.SystemUpdates
 import dev.omalauncher.linux.TerminalFont
@@ -82,7 +83,8 @@ class Runtime(
     val androidApps = AndroidAppCatalog(context)
     val usage = AppUsage(context)
     val themes = ThemeStore(context, proot, isLinux = { linux }, onConfigChanged = ::syncGuest)
-    private val audio = AudioBridge(proot)
+    val microphone = MicrophoneBridge(context, proot)
+    private val audio = AudioBridge(proot, microphone)
     private val openBridge = OpenBridge(context, proot, onOpenFiles = ::openFiles)
     val agents = AgentStore(proot, onChanged = ::syncGuest)
     val pacman = Pacman(context, proot)
@@ -230,6 +232,7 @@ class Runtime(
             scope.launch {
                 linux = false
                 widgets.linuxChanged(false)
+                microphone.stop()
                 audio.stop()
                 withContext(Dispatchers.IO) { proot.killAll() }
                 bootstrap.remove()
@@ -366,7 +369,15 @@ class Runtime(
 
     fun screenStopped() {
         screens = (screens - 1).coerceAtLeast(0)
-        if (screens == 0) proot.procShim.setActive(false)
+        if (screens == 0) {
+            microphone.stop()
+            proot.procShim.setActive(false)
+        }
+    }
+
+    /** Sharing the phone microphone is opt-in and ends when the launcher leaves the screen. */
+    fun setMicrophone(on: Boolean) {
+        if (on && linux && screens > 0) microphone.start() else microphone.stop()
     }
 
     /** Rescans .desktop entries; the list only changes (and recomposes) when entries do. */

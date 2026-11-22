@@ -42,6 +42,17 @@ installed one; the choice is saved in `~/.config/omalauncher/agent`. Hold the mi
 into the field. Speech is recognized by Android (on the device when the phone
 supports it), so only text reaches Linux.
 
+For realtime voice in Linux apps, use **share phone mic** at the bottom-left of
+a Linux window, or in the launcher's settings, and grant Android microphone
+permission. This exposes the phone's raw audio as PulseAudio's default input,
+`android_mic`; it is separate from the prompt bar's speech-to-text dictation.
+The control shows **mic on · stop** while sharing. Sharing stops when all
+launcher screens are hidden or Linux is removed, and must be enabled again.
+Any Linux app recording that source can receive the audio and send it to its
+own service. For Tern Carly, sign OMP in to ChatGPT (Codex), then turn on
+Carly's microphone; her GPT realtime voice uses this input and the existing
+Android speaker output.
+
 Touch input in Linux windows: tap is a left click, long press is a right
 click, drag scrolls; apps with touch support (foot, GTK) get real touch.
 Hardware keyboard shortcuts: Super+Enter (terminal), Super+Space or

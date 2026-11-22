@@ -44,6 +44,7 @@ import dev.omalauncher.ui.ExtraKeys
 import dev.omalauncher.ui.KeyboardSink
 import dev.omalauncher.ui.extraKeysWanted
 import dev.omalauncher.ui.Mono
+import dev.omalauncher.ui.LinuxMicrophoneControl
 import dev.omalauncher.ui.Palette
 import dev.omalauncher.ui.linuxWindowInput
 import dev.omalauncher.ui.applySystemBars
@@ -198,6 +199,10 @@ private fun AppWindow(
                 ) {
                     BasicText("⌨", style = Mono.copy(color = Palette.foreground))
                 }
+                LinuxMicrophoneControl(
+                    runtime,
+                    Modifier.align(Alignment.BottomStart).padding(12.dp),
+                )
             }
             // Below the window rather than over it, so the window shrinks and nothing hides behind the keys.
             if (extraKeysWanted()) ExtraKeys(runtime.keyboard)

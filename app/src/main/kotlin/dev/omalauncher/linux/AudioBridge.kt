@@ -22,18 +22,19 @@ private const val MAX_BACKOFF_MS = 60_000L
  */
 class AudioBridge(
     private val proot: Proot,
+    private val microphone: MicrophoneBridge,
 ) {
     private val fifo = File(proot.runtimeDir, "audio.fifo")
     private val runtimeDir = Proot.GUEST_RUNTIME_DIR
 
-    /** PulseAudio config: only the socket clients use and the pipe sink we read. */
+    /** Guest playback and the opt-in Android microphone source share this PulseAudio daemon. */
     private val config =
         """
         load-module module-native-protocol-unix auth-anonymous=1 socket=$runtimeDir/pulse/native
         load-module module-pipe-sink file=$runtimeDir/${fifo.name} format=s16le rate=$RATE channels=2 sink_name=android sink_properties=device.description=Android
         load-module module-suspend-on-idle timeout=1
         set-default-sink android
-        """.trimIndent() + "\n"
+        """.trimIndent() + "\n" + microphone.sourceConfig
 
     private val lock = Object()
     private var playing = false

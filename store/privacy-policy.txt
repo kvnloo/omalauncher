@@ -19,7 +19,7 @@ Your home screen layout, widgets, theme settings and, if you install it, the Lin
 
 3. Device Permissions
 
-- Microphone (optional): used only while you hold or tap the microphone button to dictate a prompt. Speech is recognized by your phone's speech recognition service (on the device where the phone supports it), and only the resulting text is passed to the app you are talking to. The App does not record or store audio.
+- Microphone (optional): prompt dictation uses your phone's speech recognition service (on the device where supported) and passes only recognized text to the app you are talking to. Separately, choosing "share phone mic" streams raw microphone audio to Linux apps through a local audio input. Sharing requires Android microphone permission, shows an active control, and stops when all launcher screens are hidden or Linux is removed. You must enable it again to resume. The App does not save microphone audio, but a Linux app recording this input may save it or send it to its own provider under that provider's terms and privacy policy.
 - Notification access (optional): lets media widgets show and control what is currently playing, and lets widgets you add show your notifications (app name, title and text) and open or dismiss them. Notifications are read on your device, only when a widget on your home screen asks for them, and are not stored or sent to us. A widget you add could send what it shows to a service it contacts; each widget's page in the widget store shows what it runs and which addresses it contacts.
 - Uninstalling apps: used only when you choose to uninstall an app from the app drawer. Android asks you to confirm every uninstall.
 - Internet: used to download the content listed in section 4.
@@ -47,6 +47,7 @@ Optional Linux environment
 
 Optional coding agents
 - Only if you choose to install a coding agent (for example Claude Code, Codex or OpenCode), it is downloaded from its vendor. The prompts you send to an agent, and the files it works with, are sent to that agent's provider under the provider's own terms and privacy policy. You sign in to each agent with your own account.
+- Linux voice clients, including Tern Carly's GPT realtime voice, may send raw microphone audio to their own provider when you enable microphone sharing and voice. Their provider's privacy policy applies.
 
 We do not share any data with third parties ourselves.
 

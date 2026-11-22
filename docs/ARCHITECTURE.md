@@ -63,6 +63,27 @@ again after every system update; if that fails, apps render in software
 `GALLIUM_DRIVER=llvmpipe app`. Terminal apps (foot) draw on the CPU and
 don't change.
 
+## Audio
+
+`linux/AudioBridge.kt` runs guest PulseAudio. Its `module-pipe-sink` writes
+48 kHz stereo PCM16 into the shared `audio.fifo`, which Android `AudioTrack`
+plays. `linux/MicrophoneBridge.kt` supplies the reverse path: Android
+`AudioRecord` using `VOICE_COMMUNICATION` captures 48 kHz mono PCM16 into
+`android-mic.fifo`, consumed by `module-pipe-source` as `android_mic`, the
+guest's default input. Android echo cancellation is enabled where available.
+
+Raw microphone sharing is explicitly enabled through
+`ui/LinuxMicrophoneControl.kt`, which requests `RECORD_AUDIO` permission.
+The capture worker opens the FIFO nonblocking before starting the recorder;
+while PulseAudio is unavailable it waits without capturing, and the UI can
+cancel that request. Nonblocking writes drop a full pipe's chunk instead of
+queuing stale voice audio. Stop/start generations serialize recorder cleanup
+and prevent an old worker from changing the current UI state.
+`Runtime.screenStopped` stops capture when the last launcher screen is hidden;
+removing Linux also stops it. Microphone sharing is not persisted or restarted
+in the background. Prompt-bar dictation still uses Android speech recognition
+and sends only recognized text.
+
 ## Updates
 
 The app writes into the rootfs and keeps state of its own, so an update must

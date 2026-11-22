@@ -17,8 +17,8 @@ import androidx.compose.runtime.setValue
 import java.util.Locale
 
 /**
- * Android speech recognition for the prompt bar. The guest has no microphone,
- * so speech becomes text here and only text reaches Linux. Prefers the
+ * Android speech recognition for the prompt bar: only recognized text reaches
+ * Linux here. Raw audio sharing is a separate opt-in MicrophoneBridge. Prefers the
  * on-device recognizer (offline, fast) and falls back to the regular one when
  * it has no model for the language. Main thread only, like SpeechRecognizer.
  */

@@ -71,6 +71,7 @@ fun SettingsScreen(
             LaunchedEffect(Unit) { runtime.updates.check() }
             UpdatesRow(runtime)
             SetupUpdates(runtime)
+            LinuxMicrophoneControl(runtime, Modifier.padding(bottom = 8.dp))
         }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(rows, key = { it.first }) { (title, subtitle, onClick) ->
