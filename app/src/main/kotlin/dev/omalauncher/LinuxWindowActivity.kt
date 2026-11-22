@@ -19,12 +19,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.imeAnimationTarget
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -38,11 +41,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import dev.omalauncher.ui.ExtraKeys
 import dev.omalauncher.ui.KeyboardSink
-import dev.omalauncher.ui.extraKeysWanted
 import dev.omalauncher.ui.Mono
 import dev.omalauncher.ui.LinuxMicrophoneControl
 import dev.omalauncher.ui.Palette
@@ -161,6 +164,7 @@ private fun taskIcon(
     return bmp
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AppWindow(
     runtime: Runtime,
@@ -168,12 +172,16 @@ private fun AppWindow(
 ) {
     var sink by remember { mutableStateOf<KeyboardSink?>(null) }
     val background = Palette.surface.toArgb()
+    // Resize the guest once to the keyboard's destination, not on every animation frame.
+    val imeTarget = WindowInsets.imeAnimationTarget
+    // Use the same destination for the keys, so they don't cause a second resize.
+    val extraKeys = imeTarget.getBottom(LocalDensity.current) > 0
     Box(
         Modifier
             .fillMaxSize()
             .background(Palette.background)
             .systemBarsPadding()
-            .imePadding(),
+            .windowInsetsPadding(imeTarget),
     ) {
         AndroidView(
             factory = { KeyboardSink(it, runtime.keyboard).also { v -> sink = v } },
@@ -205,7 +213,7 @@ private fun AppWindow(
                 )
             }
             // Below the window rather than over it, so the window shrinks and nothing hides behind the keys.
-            if (extraKeysWanted()) ExtraKeys(runtime.keyboard)
+            if (extraKeys) ExtraKeys(runtime.keyboard)
         }
     }
 }

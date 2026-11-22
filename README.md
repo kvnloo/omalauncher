@@ -59,6 +59,70 @@ Hardware keyboard shortcuts: Super+Enter (terminal), Super+Space or
 Super+A (the bar), Super+1..9 (home pages) on the home screen; Super+Enter
 and Super+W (close) in Linux windows.
 
+Tern in this phone's local install uses `~/.local/bin/tern`, including from its
+desktop entries. The wrapper preloads
+`~/.local/opt/tern-0.7.3/tern/proot-peercred.so`: PRoot otherwise exposes Android
+user IDs between separate launcher processes but guest IDs within one process
+tree, so Tern rejects its own daemon connection as an older daemon. The shim
+maps only this Android user's credentials to the guest identity; other users
+remain subject to Tern's normal access check, and pane shells stay root.
+Its source is `proot-peercred.c` beside the library. Rebuild with
+`cc -shared -fPIC -O2 -Wall -Wextra -Werror -Wl,-z,relro,-z,now -o proot-peercred.so.new proot-peercred.c`,
+then atomically rename the new library over the old one and restart Tern's
+daemon after saving work. Do not overwrite a library mapped by running processes.
+
+### Local phone: Linux sessions disappearing together
+
+If Tern, its daemon, and shell/agent processes disappear together, check Android
+logcat before treating later GPU errors as the cause. On this phone, Android
+logged `Trimming phantom processes` for Omalauncher's `libproot.so`; its Linux
+children then died while the Android launcher process remained alive. The
+default phantom-child limit was 32. Tern's GPU/Wayland errors followed the kill.
+
+The live device fix is:
+
+```sh
+adb shell settings put global settings_enable_monitor_phantom_procs false
+adb shell settings get global settings_enable_monitor_phantom_procs
+# Expected: false
+```
+
+This is device-wide: it disables phantom-child trimming, not normal low-memory
+kills. Android's framework checks this nonempty global setting before the
+`persist.sys.fflag.override.settings_enable_monitor_phantom_procs` property;
+changing that property is not required. No APK replacement or session restart
+is needed. To restore this phone's previous unset value:
+`adb shell settings delete global settings_enable_monitor_phantom_procs`.
+
+A 35-second live check kept 40 temporary idle Linux children alive, preserved
+the launcher and both Tern PIDs, and confirmed daemon/UI responses with no new
+phantom-trim kills. This does not rule out unrelated future crashes or OOM kills.
+The experimental ADB phone-gesture helper was removed: passive monitoring cannot
+safely cancel the hardware touch stream or prove the target Tern window. The
+native gesture fix is in `~/workspace/omalauncher-tern-gestures` on
+`fix/tern-touch-keyboard` ([PR #128](https://github.com/SimonSchubert/omalauncher/pull/128)).
+The Play-signed app remains unchanged; activation needs an official signed update.
+
+### Local phone: reopening Tern from the work widget
+
+`~/.config/omalauncher/widgets/30-tern.owl` uses `~/.local/bin/tern-widget`.
+The dashboard's **open existing windows** buttons focus the actual Android
+task, rather than merely changing a tab inside a hidden Tern window. The
+helper discovers current task IDs; it does not assume that Android window
+numbers match Tern daemon window keys. **select tab** targets the pane's
+daemon group; then use the appropriate window's **open** button.
+
+Window activation uses the phone's existing, authorized wireless ADB
+connection. It needs exactly one connected device and reports a visible error
+if that connection is unavailable or a listed task has closed. It does not
+start OMP, replay prompts, or substitute a new session for a stale task.
+The dashboard discovers live pane window keys instead of listing only the
+widget shell's default window. Starting Tern or opening a new directory uses
+the launcher's graphical `app(...)` action, not its bounded background shell.
+
+This is a recovery control, not a fix for crashes or Android task retention.
+Unlocking the phone is still required before interacting with its windows.
+
 ## Building
 
 ```sh
